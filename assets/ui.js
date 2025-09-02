@@ -586,12 +586,50 @@ async function renderAchievements() {
   } catch {}
   const state = await getAllAchState();
   const got = new Set(state.map((s) => s.id));
+  // 今ねらえる3つ（ざっくりヒューリスティック）
+  try {
+    const books = await loadBooks();
+    const sugs = suggestNext(defs, got, books).slice(0, 3);
+    const ul = document.getElementById("ach-suggestions");
+    if (ul)
+      ul.innerHTML = sugs
+        .map(
+          (d) =>
+            `<li><strong>${escapeHtml(d.name)}</strong> — <span class="muted">${escapeHtml(d.description)}</span></li>`,
+        )
+        .join("");
+  } catch {}
   listEl.innerHTML = defs
     .map((d) => {
       const cl = got.has(d.id) ? "ach-item got" : "ach-item";
       return `<div class="${cl}"><div class="name">${escapeHtml(d.name)}</div><div class="desc">${escapeHtml(d.description)}</div></div>`;
     })
     .join("");
+}
+
+function suggestNext(defs, got, books) {
+  const total = books.filter((b) => b.finishedAt).length;
+  const byMonth = books.filter(
+    (b) => b.finishedAt && b.finishedAt.slice(0, 7) === todayISO().slice(0, 7),
+  ).length;
+  const byYear = books.filter(
+    (b) => b.finishedAt && b.finishedAt.slice(0, 4) === todayISO().slice(0, 4),
+  ).length;
+  const candidates = [];
+  for (const d of defs) {
+    if (got.has(d.id)) continue;
+    const r = d.rule || {};
+    if (r.type === "TOTAL_READS" && r.gte) {
+      candidates.push({ def: d, remain: Math.max(0, r.gte - total) });
+    }
+    if (r.type === "MONTH_READS" && r.gte) {
+      candidates.push({ def: d, remain: Math.max(0, r.gte - byMonth) });
+    }
+    if (r.type === "YEAR_READS" && r.gte) {
+      candidates.push({ def: d, remain: Math.max(0, r.gte - byYear) });
+    }
+  }
+  return candidates.sort((a, b) => a.remain - b.remain).map((x) => x.def);
 }
 
 // Export / Import
