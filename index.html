@@ -2,14 +2,78 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./docs/" />
-    <title>Redirecting…</title>
-    <script>
-      window.location.replace('./docs/');
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ブックメイカー</title>
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <meta name="theme-color" content="#0F172A" />
+    <link rel="stylesheet" href="./assets/style.css" />
   </head>
   <body>
-    <p>Redirecting to <a href="./docs/">./docs/</a> …</p>
-  </body>
-  </html>
+    <header class="app-header">
+      <div class="brand">📑 ブックメイカー</div>
+      <nav class="tabs">
+        <a href="#/home" id="tab-home">ホーム</a>
+        <a href="#/calendar" id="tab-calendar">カレンダー</a>
+        <a href="#/achievements" id="tab-achievements">実績</a>
+        <button id="btn-settings" class="btn">設定</button>
+        <button id="btn-add" class="btn primary">＋ 追加</button>
+      </nav>
+    </header>
 
+    <main id="app"></main>
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <input type="file" id="import-file" accept="application/json" style="display: none" />
+
+    <dialog id="book-modal" class="modal">
+      <form id="book-form" method="dialog">
+        <h3>本を追加/編集</h3>
+        <label>タイトル <input required name="title" /></label>
+        <label>著者 <input required name="author" /></label>
+        <div class="row">
+          <label>開始日 <input type="date" name="startedAt" /></label>
+          <label><input type="checkbox" name="finishedToggle" /> 読了</label>
+          <label>読了日 <input type="date" name="finishedAt" disabled /></label>
+        </div>
+        <label>★評価（0–5） <input type="number" name="rating" min="0" max="5" step="1" /></label>
+        <label
+          >一言まとめ（20字）
+          <input name="oneLiner" maxlength="20" />
+        </label>
+        <label
+          >感想
+          <textarea
+            name="reviewText"
+            rows="4"
+            placeholder="自由に書いてOK（空でも保存可）"
+          ></textarea>
+        </label>
+        <menu class="actions">
+          <button value="cancel" class="btn">キャンセル</button>
+          <button value="submit" class="btn primary">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="settings-modal" class="modal">
+      <form id="settings-form" method="dialog">
+        <h3>設定</h3>
+        <label
+          >テーマ
+          <select name="theme">
+            <option value="light">ライト</option>
+            <option value="dark">ダーク</option>
+          </select>
+        </label>
+        <menu class="actions">
+          <button value="cancel" class="btn">閉じる</button>
+          <button value="submit" class="btn primary">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script type="module" src="./assets/app.js"></script>
+    <script type="module" src="./assets/ui.js"></script>
+  </body>
+</html>

@@ -30,4 +30,14 @@ export default [
       },
     },
   },
+  // Browser scripts under root assets/
+  {
+    files: ['assets/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.es2022,
+      },
+    },
+  },
 ];
