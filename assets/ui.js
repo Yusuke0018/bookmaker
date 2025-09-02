@@ -436,6 +436,9 @@ async function renderCalendar() {
 }
 
 async function renderMonthInner() {
+  const grid = document.getElementById("cal-grid");
+  const ul = document.getElementById("cal-day-ul");
+  if (!grid || !ul) return;
   const books = await loadBooks();
   const counts = new Map(); // key: yyyy-mm-dd -> count
   const listByDay = new Map();
