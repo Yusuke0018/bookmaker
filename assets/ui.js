@@ -80,6 +80,32 @@ window.addEventListener("load", () => {
     await evaluateAfterEvent("settings");
     showToast("設定を保存しました。");
   });
+  // テーマ選択の即時反映
+  const themeSel = sf?.querySelector('select[name="theme"]');
+  themeSel?.addEventListener("change", async () => {
+    const theme = themeSel.value;
+    applyTheme(theme);
+    const s = await loadSettings();
+    await saveSettings({ ...s, theme });
+  });
+  // キャッシュ削除ボタン
+  const btnClear = document.getElementById("btn-clear-cache");
+  btnClear?.addEventListener("click", async () => {
+    try {
+      if (
+        confirm(
+          "オフラインキャッシュとService Workerを削除します。よろしいですか？",
+        )
+      ) {
+        const regs = await navigator.serviceWorker?.getRegistrations?.();
+        if (regs) await Promise.all(regs.map((r) => r.unregister()));
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+        showToast("キャッシュを削除しました。ページを再読み込みします。");
+        setTimeout(() => location.reload(), 500);
+      }
+    } catch {}
+  });
 });
 
 function showToast(msg) {
