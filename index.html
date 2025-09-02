@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0F172A" />
     <title>ブックメイカー（却本作り）</title>
+    <script>
+      // ルートURL自体にもバージョンを付与してPWAの起動URLを更新
+      (function () {
+        var V = "20250902-05";
+        try {
+          var u = new URL(location.href);
+          if (u.searchParams.get("v") !== V) {
+            u.searchParams.set("v", V);
+            location.replace(u.toString());
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta
       name="description"
       content="最小入力で学びを蓄積し、楽しく振り返る読書ログ"
@@ -18,7 +31,7 @@
       content="black-translucent"
     />
     <meta http-equiv="Cache-Control" content="no-store" />
-    <link rel="stylesheet" href="./assets/style.css?v=20250902-04" />
+    <link rel="stylesheet" href="./assets/style.css?v=20250902-05" />
   </head>
   <body>
     <header class="app-header">
@@ -273,19 +286,29 @@
 
     <div id="toast" role="status" class="toast" hidden></div>
 
-    <script src="./assets/app.js?v=20250902-04" type="module"></script>
-    <script src="./assets/achievements.js?v=20250902-04" type="module"></script>
-    <script src="./assets/ui.js?v=20250902-04" type="module"></script>
+    <script src="./assets/app.js?v=20250902-05" type="module"></script>
+    <script src="./assets/achievements.js?v=20250902-05" type="module"></script>
+    <script src="./assets/ui.js?v=20250902-05" type="module"></script>
     <script>
       // 可能なら軽量SWを登録（キャッシュはしない）
       if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("./sw.js?v=20250902-04", { updateViaCache: "none" })
-            .then((reg) => {
-              try { reg.update(); } catch {}
-            })
-            .catch(() => {});
+        window.addEventListener("load", async () => {
+          try {
+            // 既存SWを全解除＋キャッシュ全削除（PWAでも強制更新）
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map((r) => r.unregister()));
+            if (window.caches) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map((k) => caches.delete(k)));
+            }
+          } catch (e) {}
+          try {
+            const reg = await navigator.serviceWorker.register(
+              "./sw-v20250902-05.js",
+              { updateViaCache: "none" },
+            );
+            try { reg.update(); } catch {}
+          } catch (e) {}
         });
         navigator.serviceWorker.addEventListener("message", (e) => {
           const d = e.data || {};
