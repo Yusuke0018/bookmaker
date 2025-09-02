@@ -46,6 +46,12 @@ window.addEventListener("load", () => {
   loadAchievementDefs().catch(() => {});
   const rel = document.getElementById("reload-ach");
   rel?.addEventListener("click", () => renderAchievements());
+  const btnExp = document.getElementById("btn-export");
+  const btnImp = document.getElementById("btn-import");
+  const fileImp = document.getElementById("file-import");
+  btnExp?.addEventListener("click", exportJson);
+  btnImp?.addEventListener("click", () => fileImp?.click());
+  fileImp?.addEventListener("change", importJson);
 });
 
 function showToast(msg) {
@@ -357,4 +363,60 @@ async function renderAchievements() {
         `<div class="ach-item"><div class="name">${escapeHtml(d.name)}</div><div class="desc">${escapeHtml(d.description)}</div></div>`,
     )
     .join("");
+}
+
+// Export / Import
+async function exportJson() {
+  const books = await loadBooks();
+  const blob = new Blob([JSON.stringify({ books }, null, 2)], {
+    type: "application/json",
+  });
+  const a = document.createElement("a");
+  const ymd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  a.href = URL.createObjectURL(blob);
+  a.download = `backup_${ymd}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast("保存完了。未来の自分に贈り物を。");
+}
+
+async function importJson(e) {
+  const input = e.target;
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || !Array.isArray(data.books)) throw new Error("Invalid format");
+    // 既存とマージ（同IDは上書き、未存在は追加）
+    const existing = await loadBooks();
+    const map = new Map(existing.map((b) => [b.id, b]));
+    for (const nb of data.books) map.set(nb.id, nb);
+    // クリア→一括putは未実装のため、個別更新/追加（簡易）
+    // 既存を削除し、新規を追加（books量は最大1000想定で許容）
+    const toDelete = existing.filter((b) => !map.has(b.id));
+    for (const b of toDelete) await deleteBook(b.id);
+    const merged = Array.from(map.values());
+    // 反映：既存IDはupdate、新規IDはcreateっぽくadd。
+    const existingIds = new Set(existing.map((b) => b.id));
+    for (const b of merged) {
+      if (existingIds.has(b.id)) {
+        await updateBook(b.id, b);
+      } else {
+        await createBook(b);
+      }
+    }
+    await renderHome();
+    showToast("記憶を製本しました。");
+    // インポート後に称号を再評価
+    try {
+      const books = await loadBooks();
+      await evaluateAndSave(books);
+    } catch {}
+  } catch {
+    alert("インポートに失敗しました。ファイル形式をご確認ください。");
+  } finally {
+    input.value = "";
+  }
 }
