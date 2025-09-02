@@ -30,6 +30,14 @@ body {
   background: var(--paper);
   color: var(--ink);
 }
+/* dark theme adjustments */
+[data-theme="dark"] {
+  --paper: #0b1020;
+  --ink: #e5e7eb;
+  --card: #0f162b;
+  --line: #24304d;
+  --muted: #94a3b8;
+}
 .app-header {
   position: sticky;
   top: 0;

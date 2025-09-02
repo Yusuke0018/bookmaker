@@ -8,6 +8,8 @@ import {
   deleteBook,
 } from "./app.js";
 import { evaluateAndSave, loadAchievementDefs } from "./achievements.js";
+import { getStats, putStats, rebuildStats } from "./stats.js";
+import { loadSettings, saveSettings, applyTheme } from "./settings.js";
 import { getAllAchState } from "./db.js";
 
 const views = {
@@ -22,6 +24,7 @@ const tabs = {
   calendar: document.getElementById("tab-calendar"),
   add: document.getElementById("tab-add"),
   achievements: document.getElementById("tab-achievements"),
+  settings: document.getElementById("tab-settings"),
 };
 
 function route() {
@@ -35,6 +38,7 @@ function route() {
   if (hash === "home") renderHome();
   if (hash === "calendar") renderCalendar();
   if (hash === "achievements") renderAchievements();
+  if (hash === "settings") renderSettings();
 }
 
 window.addEventListener("hashchange", route);
@@ -45,6 +49,10 @@ window.addEventListener("load", () => {
   initCalendar();
   // 事前に称号定義を読み込んでおく
   loadAchievementDefs().catch(() => {});
+  // 設定の適用
+  loadSettings()
+    .then((s) => applyTheme(s.theme))
+    .catch(() => {});
   const rel = document.getElementById("reload-ach");
   rel?.addEventListener("click", () => renderAchievements());
   const btnExp = document.getElementById("btn-export");
@@ -53,6 +61,24 @@ window.addEventListener("load", () => {
   btnExp?.addEventListener("click", exportJson);
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
+  // 設定フォーム
+  const sf = document.getElementById("settings-form");
+  sf?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = new FormData(sf);
+    const s = {
+      theme: data.get("theme"),
+      startOfWeek: data.get("startOfWeek"),
+      sound: data.get("sound") === "true",
+    };
+    await saveSettings(s);
+    applyTheme(s.theme);
+    const stats = await getStats();
+    stats.actions.settingsSaved = (stats.actions.settingsSaved || 0) + 1;
+    await putStats(stats);
+    await evaluateAfterEvent("settings");
+    showToast("設定を保存しました。");
+  });
 });
 
 function showToast(msg) {
@@ -65,10 +91,9 @@ function showToast(msg) {
 // Home
 async function renderHome() {
   const list = document.getElementById("recent-list");
-  const grid = document.getElementById("cal-grid");
-  const ul = document.getElementById("cal-day-ul");
-  if (!grid || !ul) return;
   const books = await loadBooks();
+  const qel = document.getElementById("quote");
+  if (qel) qel.textContent = pickDailyQuote();
   list.innerHTML = books
     .map((b) => {
       const date = b.finishedAt || b.startedAt || b.createdAt.slice(0, 10);
@@ -108,6 +133,10 @@ async function renderHome() {
       if (!confirm("この本を削除します。よろしいですか？")) return;
       await deleteBook(id);
       showToast("削除も勇気。綴じ直しました。");
+      const stats = await getStats();
+      stats.actions.deleteCount = (stats.actions.deleteCount || 0) + 1;
+      await putStats(stats);
+      await evaluateAfterEvent("delete");
       renderHome();
     });
   });
@@ -117,6 +146,13 @@ function initHomeSearch() {
   const q = document.getElementById("q");
   q.addEventListener("input", async () => {
     const results = await searchBooks(q.value);
+    if (q.value && q.value !== q.dataset.prev) {
+      const stats = await getStats();
+      stats.actions.searchCount = (stats.actions.searchCount || 0) + 1;
+      await putStats(stats);
+      q.dataset.prev = q.value;
+      await evaluateAfterEvent("search");
+    }
     const list = document.getElementById("recent-list");
     list.innerHTML = results
       .map(
@@ -152,18 +188,24 @@ function initForm() {
     if (form.dataset.mode === "edit" && form.dataset.id) {
       await updateBook(form.dataset.id, payload);
       showToast("更新しました。紙背が整いました。");
+      const stats = await getStats();
+      stats.actions.editCounts[form.dataset.id] =
+        (stats.actions.editCounts[form.dataset.id] || 0) + 1;
+      if (typeof payload.rating === "number")
+        stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
+      await putStats(stats);
     } else {
       await createBook(payload);
       showToast("綴じました。次のページへ。");
+      const stats = await getStats();
+      if ((payload.startedAt || "") === todayISO())
+        stats.actions.fastCreateCount =
+          (stats.actions.fastCreateCount || 0) + 1;
+      if (typeof payload.rating === "number")
+        stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
+      await putStats(stats);
     }
-    // 称号評価（最小: TOTAL_READS）
-    try {
-      const books = await loadBooks();
-      const newly = await evaluateAndSave(books);
-      if (newly.length) {
-        newly.forEach((d) => showToast(`${d.name}：${d.description}`));
-      }
-    } catch {}
+    await evaluateAfterEvent("createOrEdit");
     await renderHome();
     if (cont && form.dataset.mode !== "edit") {
       form.reset();
@@ -195,6 +237,21 @@ function escapeHtml(s) {
     .replaceAll("'", "&#39;");
 }
 
+function pickDailyQuote() {
+  const quotes = [
+    "本は心の鏡。今日の自分に一節を。",
+    "読み終わりは始まりの合図。",
+    "一行の発見が、一日の景色を変える。",
+    "迷ったら、本棚へ。",
+    "手のひらサイズの旅支度。",
+  ];
+  const d = new Date();
+  const idx =
+    (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) %
+    quotes.length;
+  return quotes[idx];
+}
+
 async function enterEditMode(id) {
   const list = await loadBooks();
   const b = list.find((x) => x.id === id);
@@ -216,6 +273,72 @@ function clearEditMode() {
   const form = document.getElementById("book-form");
   delete form.dataset.mode;
   delete form.dataset.id;
+}
+
+async function renderSettings() {
+  const sf = document.getElementById("settings-form");
+  if (!sf) return;
+  const s = await loadSettings();
+  sf.theme.value = s.theme;
+  sf.startOfWeek.value = s.startOfWeek;
+  sf.sound.value = String(!!s.sound);
+}
+
+async function evaluateAfterEvent(event) {
+  try {
+    const books = await loadBooks();
+    const stats = await rebuildStats(books);
+    const prev = await getStats();
+    stats.actions = { ...prev.actions };
+    await putStats(stats);
+    const newly = await evaluateAndSave(books, { stats, event });
+    if (newly.length) {
+      newly.forEach((d) => {
+        showToast(`${d.name}：${d.description}`);
+        if (["A007", "A009", "A025"].includes(d.id))
+          try {
+            confetti(1000);
+          } catch {}
+      });
+    }
+  } catch {}
+}
+
+function confetti(duration = 1000) {
+  const c = document.createElement("canvas");
+  c.style.position = "fixed";
+  c.style.left = "0";
+  c.style.top = "0";
+  c.style.width = "100%";
+  c.style.height = "100%";
+  c.style.pointerEvents = "none";
+  c.width = innerWidth;
+  c.height = innerHeight;
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  const N = 120,
+    parts = Array.from({ length: N }, () => ({
+      x: Math.random() * c.width,
+      y: -Math.random() * c.height,
+      vy: 2 + Math.random() * 3,
+      vx: -2 + Math.random() * 4,
+      size: 4 + Math.random() * 6,
+      color: `hsl(${Math.random() * 360},90%,60%)`,
+    }));
+  let start = performance.now();
+  function step(t) {
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const p of parts) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y > c.height) p.y = -10;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    }
+    if (t - start < duration) requestAnimationFrame(step);
+    else document.body.removeChild(c);
+  }
+  requestAnimationFrame(step);
 }
 
 // Calendar
@@ -346,8 +469,9 @@ async function renderMonthInner() {
   updateCalSummary(books, totalMonth);
 }
 
-function updateCalSummary(books, totalMonth) {
+async function updateCalSummary(books, totalMonth) {
   const now = new Date();
+  const s = await loadSettings().catch(() => ({ startOfWeek: "mon" }));
   const weekInfo = weekRange(now);
   const year = now.getFullYear();
   const totalWeek = books.filter(
@@ -473,7 +597,9 @@ async function renderAchievements() {
 // Export / Import
 async function exportJson() {
   const books = await loadBooks();
-  const blob = new Blob([JSON.stringify({ books }, null, 2)], {
+  const settings = await loadSettings();
+  const stats = await getStats();
+  const blob = new Blob([JSON.stringify({ books, settings, stats }, null, 2)], {
     type: "application/json",
   });
   const a = document.createElement("a");
@@ -484,6 +610,10 @@ async function exportJson() {
   a.click();
   a.remove();
   showToast("保存完了。未来の自分に贈り物を。");
+  const st = await getStats();
+  st.actions.exportCount = (st.actions.exportCount || 0) + 1;
+  await putStats(st);
+  await evaluateAfterEvent("export");
 }
 
 async function importJson(e) {
@@ -514,11 +644,10 @@ async function importJson(e) {
     }
     await renderHome();
     showToast("記憶を製本しました。");
-    // インポート後に称号を再評価
-    try {
-      const books = await loadBooks();
-      await evaluateAndSave(books);
-    } catch {}
+    const st = await getStats();
+    st.actions.importCount = (st.actions.importCount || 0) + 1;
+    await putStats(st);
+    await evaluateAfterEvent("import");
   } catch {
     alert("インポートに失敗しました。ファイル形式をご確認ください。");
   } finally {

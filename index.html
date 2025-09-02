@@ -22,6 +22,7 @@
         <a href="#calendar" id="tab-calendar" class="tab">カレンダー</a>
         <a href="#add" id="tab-add" class="tab">追加</a>
         <a href="#achievements" id="tab-achievements" class="tab">実績</a>
+        <a href="#settings" id="tab-settings" class="tab">設定</a>
       </nav>
     </header>
 
@@ -40,6 +41,11 @@
         <div class="card" id="reunion-card" hidden>
           <h2 class="h2">今日の再会本</h2>
           <div id="reunion"></div>
+        </div>
+
+        <div class="card" id="quote-card">
+          <h2 class="h2">今日の名言</h2>
+          <div id="quote"></div>
         </div>
 
         <div class="card">
@@ -190,6 +196,39 @@
           </div>
           <div id="ach-list" class="ach-grid"></div>
         </div>
+      </section>
+
+      <section id="view-settings" class="view" aria-labelledby="tab-settings">
+        <form id="settings-form" class="card">
+          <h2 class="h2">設定</h2>
+          <div class="grid">
+            <label class="label"
+              >テーマ
+              <select name="theme" class="input">
+                <option value="auto">自動</option>
+                <option value="light">ライト</option>
+                <option value="dark">ダーク</option>
+              </select>
+            </label>
+            <label class="label"
+              >週の始まり
+              <select name="startOfWeek" class="input">
+                <option value="mon">月曜</option>
+                <option value="sun">日曜</option>
+              </select>
+            </label>
+            <label class="label"
+              >演出の音
+              <select name="sound" class="input">
+                <option value="false">オフ</option>
+                <option value="true">オン</option>
+              </select>
+            </label>
+          </div>
+          <div class="row gap" style="margin-top: 8px">
+            <button type="submit" class="btn primary">保存</button>
+          </div>
+        </form>
       </section>
     </main>
 

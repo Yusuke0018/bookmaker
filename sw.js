@@ -7,6 +7,8 @@ const ASSETS = [
   "./assets/app.js",
   "./assets/achievements.js",
   "./assets/achievements.json",
+  "./assets/stats.js",
+  "./assets/settings.js",
   "./assets/db.js",
   "./assets/ui.js",
   "./manifest.json",

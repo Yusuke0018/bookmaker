@@ -69,6 +69,77 @@
     "description": "累計150冊を達成しました。",
     "rule": { "type": "TOTAL_READS", "gte": 150 }
   },
+
+  {
+    "id": "A011",
+    "name": "週刊ビブリオ",
+    "category": "period",
+    "description": "同一週に2冊以上読了。",
+    "rule": { "type": "WEEK_READS", "gte": 2 }
+  },
+  {
+    "id": "A012",
+    "name": "月刊しおり",
+    "category": "period",
+    "description": "同一月に5冊以上読了。",
+    "rule": { "type": "MONTH_READS", "gte": 5 }
+  },
+  {
+    "id": "A013",
+    "name": "月間書痩せ",
+    "category": "period",
+    "description": "同一月に10冊以上読了。",
+    "rule": { "type": "MONTH_READS", "gte": 10 }
+  },
+  {
+    "id": "A014",
+    "name": "四半期ハイライト",
+    "category": "period",
+    "description": "直近3か月で20冊以上。",
+    "rule": { "type": "QUARTER_READS", "gte": 20 }
+  },
+  {
+    "id": "A015",
+    "name": "半年で積み崩し",
+    "category": "period",
+    "description": "直近6か月で30冊以上。",
+    "rule": { "type": "HALF_YEAR_READS", "gte": 30 }
+  },
+  {
+    "id": "A016",
+    "name": "年の瀬ビッグリーダー",
+    "category": "period",
+    "description": "今年50冊。",
+    "rule": { "type": "YEAR_READS", "gte": 50 }
+  },
+  {
+    "id": "A017",
+    "name": "年またぎ製本機",
+    "category": "period",
+    "description": "今年100冊。",
+    "rule": { "type": "YEAR_READS", "gte": 100 }
+  },
+  {
+    "id": "A018",
+    "name": "毎週なんか読んでる",
+    "category": "period",
+    "description": "同一月の各週で1冊以上。",
+    "rule": { "type": "MONTH_EACH_WEEK_HAS_READ" }
+  },
+  {
+    "id": "A019",
+    "name": "七連読",
+    "category": "streak",
+    "description": "7日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 7 }
+  },
+  {
+    "id": "A020",
+    "name": "十二支コンプリ",
+    "category": "streak",
+    "description": "12か月連続で月内読了あり。",
+    "rule": { "type": "MONTH_STREAK", "gte": 12 }
+  },
   {
     "id": "A021",
     "name": "二連読",
@@ -84,11 +155,18 @@
     "rule": { "type": "STREAK_DAYS", "gte": 3 }
   },
   {
-    "id": "A019",
-    "name": "七連読",
+    "id": "A023",
+    "name": "一週間皆勤",
     "category": "streak",
     "description": "7日連続で読了しました。",
     "rule": { "type": "STREAK_DAYS", "gte": 7 }
+  },
+  {
+    "id": "A024",
+    "name": "二週間皆勤",
+    "category": "streak",
+    "description": "14日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 14 }
   },
   {
     "id": "A025",
@@ -96,5 +174,545 @@
     "category": "streak",
     "description": "30日連続で読了しました。",
     "rule": { "type": "STREAK_DAYS", "gte": 30 }
+  },
+  {
+    "id": "A026",
+    "name": "連読無双",
+    "category": "streak",
+    "description": "45日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 45 }
+  },
+  {
+    "id": "A027",
+    "name": "紙の呼吸",
+    "category": "streak",
+    "description": "60日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 60 }
+  },
+  {
+    "id": "A028",
+    "name": "しおり不要",
+    "category": "streak",
+    "description": "90日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 90 }
+  },
+  {
+    "id": "A029",
+    "name": "頁が友だち",
+    "category": "streak",
+    "description": "120日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 120 }
+  },
+  {
+    "id": "A030",
+    "name": "紙背の賢者",
+    "category": "streak",
+    "description": "180日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 180 }
+  },
+
+  {
+    "id": "A031",
+    "name": "瞬間読破",
+    "category": "speed",
+    "description": "開始日と同日に読了。",
+    "rule": { "type": "READ_SPEED", "sameDay": true }
+  },
+  {
+    "id": "A032",
+    "name": "24時間製本所",
+    "category": "speed",
+    "description": "開始から1日以内で読了。",
+    "rule": { "type": "READ_SPEED", "lteDays": 1 }
+  },
+  {
+    "id": "A033",
+    "name": "ウサギ派",
+    "category": "speed",
+    "description": "開始から3日以内で読了。",
+    "rule": { "type": "READ_SPEED", "lteDays": 3 }
+  },
+  {
+    "id": "A034",
+    "name": "コアラ派",
+    "category": "speed",
+    "description": "30日以上かけて読了。",
+    "rule": { "type": "READ_SPEED", "gteDays": 30 }
+  },
+  {
+    "id": "A035",
+    "name": "石の上にも",
+    "category": "speed",
+    "description": "60日以上かけて読了。",
+    "rule": { "type": "READ_SPEED", "gteDays": 60 }
+  },
+  {
+    "id": "A036",
+    "name": "冬越し読書",
+    "category": "speed",
+    "description": "90日以上かけて読了。",
+    "rule": { "type": "READ_SPEED", "gteDays": 90 }
+  },
+  {
+    "id": "A037",
+    "name": "高速積み崩し",
+    "category": "speed",
+    "description": "同日に2冊以上読了。",
+    "rule": { "type": "SAME_DAY_FINISHES", "gte": 2 }
+  },
+  {
+    "id": "A038",
+    "name": "トリプルフィニッシュ",
+    "category": "speed",
+    "description": "同日に3冊以上読了。",
+    "rule": { "type": "SAME_DAY_FINISHES", "gte": 3 }
+  },
+  {
+    "id": "A039",
+    "name": "土日一気",
+    "category": "speed",
+    "description": "土曜開始→日曜読了。",
+    "rule": { "type": "READ_SPEED", "weekendCross": true }
+  },
+  {
+    "id": "A040",
+    "name": "熟成100日",
+    "category": "speed",
+    "description": "100日以上かけて読了。",
+    "rule": { "type": "READ_SPEED", "gteDays": 100 }
+  },
+
+  {
+    "id": "A041",
+    "name": "五十字の矢",
+    "category": "review",
+    "description": "感想50字以内。",
+    "rule": { "type": "REVIEW_CHARS", "lte": 50 }
+  },
+  {
+    "id": "A042",
+    "name": "一四〇の悟り",
+    "category": "review",
+    "description": "感想140字以内。",
+    "rule": { "type": "REVIEW_CHARS", "lte": 140 }
+  },
+  {
+    "id": "A043",
+    "name": "三百字職人",
+    "category": "review",
+    "description": "感想300字以上。",
+    "rule": { "type": "REVIEW_CHARS", "gte": 300 }
+  },
+  {
+    "id": "A044",
+    "name": "五百字シェフ",
+    "category": "review",
+    "description": "感想500字以上。",
+    "rule": { "type": "REVIEW_CHARS", "gte": 500 }
+  },
+  {
+    "id": "A045",
+    "name": "千文字大往生",
+    "category": "review",
+    "description": "感想1000字以上。",
+    "rule": { "type": "REVIEW_CHARS", "gte": 1000 }
+  },
+  {
+    "id": "A046",
+    "name": "二千文字山脈",
+    "category": "review",
+    "description": "感想2000字以上。",
+    "rule": { "type": "REVIEW_CHARS", "gte": 2000 }
+  },
+  {
+    "id": "A047",
+    "name": "要点一行勝負",
+    "category": "review",
+    "description": "感想が改行なし。",
+    "rule": { "type": "REVIEW_NEWLINES", "lte": 0 }
+  },
+  {
+    "id": "A048",
+    "name": "行間の住人",
+    "category": "review",
+    "description": "感想に改行3つ以上。",
+    "rule": { "type": "REVIEW_NEWLINES", "gte": 3 }
+  },
+  {
+    "id": "A049",
+    "name": "比喩マイスター",
+    "category": "review",
+    "description": "感想に『のように/みたい』。",
+    "rule": { "type": "REVIEW_CONTAINS", "anyOf": ["のように", "みたい"] }
+  },
+  {
+    "id": "A050",
+    "name": "自虐点高め",
+    "category": "review",
+    "description": "感想に『反省/自戒』。",
+    "rule": { "type": "REVIEW_CONTAINS", "anyOf": ["反省", "自戒"] }
+  },
+
+  {
+    "id": "A051",
+    "name": "短句の人",
+    "category": "oneLiner",
+    "description": "一言まとめ10字以内。",
+    "rule": { "type": "ONE_LINER_PATTERN", "maxLen": 10 }
+  },
+  {
+    "id": "A052",
+    "name": "二十字の壁",
+    "category": "oneLiner",
+    "description": "一言まとめが20字ちょうど。",
+    "rule": { "type": "ONE_LINER_PATTERN", "exactLen": 20 }
+  },
+  {
+    "id": "A053",
+    "name": "体言止め主義",
+    "category": "oneLiner",
+    "description": "一言まとめが句点なしで終わる。",
+    "rule": { "type": "ONE_LINER_PATTERN", "noPeriod": true }
+  },
+  {
+    "id": "A054",
+    "name": "カギカッコ中毒",
+    "category": "oneLiner",
+    "description": "一言まとめに『』や“”がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasQuotes": true }
+  },
+  {
+    "id": "A055",
+    "name": "ハテナの効き",
+    "category": "oneLiner",
+    "description": "一言まとめに？がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasQuestion": true }
+  },
+  {
+    "id": "A056",
+    "name": "エモい叫び",
+    "category": "oneLiner",
+    "description": "一言まとめに！がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasExclamation": true }
+  },
+  {
+    "id": "A057",
+    "name": "三点リーダ派",
+    "category": "oneLiner",
+    "description": "一言まとめに…がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasEllipsis": true }
+  },
+  {
+    "id": "A058",
+    "name": "数字で断言",
+    "category": "oneLiner",
+    "description": "一言まとめに数字がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasDigit": true }
+  },
+  {
+    "id": "A059",
+    "name": "英語まじり",
+    "category": "oneLiner",
+    "description": "一言まとめに英字がある。",
+    "rule": { "type": "ONE_LINER_PATTERN", "hasAscii": true }
+  },
+  {
+    "id": "A060",
+    "name": "無言の哲学",
+    "category": "oneLiner",
+    "description": "一言まとめを空欄で保存。",
+    "rule": { "type": "ONE_LINER_PATTERN", "empty": true }
+  },
+
+  {
+    "id": "A061",
+    "name": "もう一回だけ",
+    "category": "reread",
+    "description": "同タイトル2回目の読了。",
+    "rule": { "type": "REREAD_COUNT", "gte": 2 }
+  },
+  {
+    "id": "A062",
+    "name": "三度目の正直",
+    "category": "reread",
+    "description": "同タイトル3回目。",
+    "rule": { "type": "REREAD_COUNT", "gte": 3 }
+  },
+  {
+    "id": "A063",
+    "name": "四回転サルコー",
+    "category": "reread",
+    "description": "同タイトル4回目。",
+    "rule": { "type": "REREAD_COUNT", "gte": 4 }
+  },
+  {
+    "id": "A064",
+    "name": "五輪書",
+    "category": "reread",
+    "description": "同タイトル5回目。",
+    "rule": { "type": "REREAD_COUNT", "gte": 5 }
+  },
+  {
+    "id": "A065",
+    "name": "七転び八起き",
+    "category": "reread",
+    "description": "同タイトル7回目。",
+    "rule": { "type": "REREAD_COUNT", "gte": 7 }
+  },
+  {
+    "id": "A066",
+    "name": "永遠の相棒",
+    "category": "reread",
+    "description": "同タイトル10回目。",
+    "rule": { "type": "REREAD_COUNT", "gte": 10 }
+  },
+  {
+    "id": "A067",
+    "name": "再読クロス",
+    "category": "reread",
+    "description": "再読で感想が前回より短い。",
+    "rule": {
+      "type": "REREAD_COMPARE",
+      "field": "reviewText",
+      "cmp": "shorter"
+    }
+  },
+  {
+    "id": "A068",
+    "name": "再読リミックス",
+    "category": "reread",
+    "description": "再読で一言まとめが前回と異なる。",
+    "rule": {
+      "type": "REREAD_COMPARE",
+      "field": "oneLiner",
+      "cmp": "different"
+    }
+  },
+  {
+    "id": "A069",
+    "name": "スピード再会",
+    "category": "reread",
+    "description": "初回から30日以内で再読。",
+    "rule": { "type": "REREAD_FROM_FIRST_DAYS", "lteDays": 30 }
+  },
+  {
+    "id": "A070",
+    "name": "時を超えて",
+    "category": "reread",
+    "description": "初回から365日以上経て再読。",
+    "rule": { "type": "REREAD_FROM_FIRST_DAYS", "gteDays": 365 }
+  },
+
+  {
+    "id": "A071",
+    "name": "著者渡り鳥",
+    "category": "author",
+    "description": "3冊連続で著者が全員違う。",
+    "rule": { "type": "LAST_N_AUTHORS_ALL_DIFFERENT", "n": 3 }
+  },
+  {
+    "id": "A072",
+    "name": "偏愛モード",
+    "category": "author",
+    "description": "同一著者を2冊連続。",
+    "rule": { "type": "SAME_AUTHOR_STREAK", "gte": 2 }
+  },
+  {
+    "id": "A073",
+    "name": "推し崇拝",
+    "category": "author",
+    "description": "同一著者を3冊連続。",
+    "rule": { "type": "SAME_AUTHOR_STREAK", "gte": 3 }
+  },
+  {
+    "id": "A074",
+    "name": "広く浅く",
+    "category": "author",
+    "description": "ユニーク著者10人達成。",
+    "rule": { "type": "UNIQUE_AUTHORS", "gte": 10 }
+  },
+  {
+    "id": "A075",
+    "name": "著者名鑑",
+    "category": "author",
+    "description": "ユニーク著者50人達成。",
+    "rule": { "type": "UNIQUE_AUTHORS", "gte": 50 }
+  },
+  {
+    "id": "A076",
+    "name": "長いお名前ですね",
+    "category": "author",
+    "description": "著者名10文字以上の本を読了。",
+    "rule": { "type": "LONG_AUTHOR_NAME", "gte": 10 }
+  },
+  {
+    "id": "A077",
+    "name": "推し月間",
+    "category": "author",
+    "description": "同一月に同一著者3冊。",
+    "rule": { "type": "MONTH_AUTHOR_3_SAME" }
+  },
+  {
+    "id": "A078",
+    "name": "同著者同日W",
+    "category": "author",
+    "description": "同一著者を同日に2冊以上。",
+    "rule": { "type": "SAME_AUTHOR_SAME_DAY" }
+  },
+  {
+    "id": "A079",
+    "name": "初対面コレクター",
+    "category": "author",
+    "description": "同月読了が全て初著者。",
+    "rule": { "type": "MONTH_ALL_FIRST_AUTHORS" }
+  },
+  {
+    "id": "A080",
+    "name": "五者五様",
+    "category": "author",
+    "description": "直近5冊の著者が全員異なる。",
+    "rule": { "type": "LAST_N_AUTHORS_ALL_DIFFERENT", "n": 5 }
+  },
+
+  {
+    "id": "A081",
+    "name": "月曜スタートダッシュ",
+    "category": "date",
+    "description": "月曜に読了。",
+    "rule": { "type": "DATE_PATTERN", "weekday": "mon" }
+  },
+  {
+    "id": "A082",
+    "name": "週末フィニッシャー",
+    "category": "date",
+    "description": "土日どちらかに読了。",
+    "rule": { "type": "DATE_PATTERN", "weekend": true }
+  },
+  {
+    "id": "A083",
+    "name": "朔の人",
+    "category": "date",
+    "description": "月の1日に読了。",
+    "rule": { "type": "DATE_PATTERN", "firstOfMonth": true }
+  },
+  {
+    "id": "A084",
+    "name": "月末締め職人",
+    "category": "date",
+    "description": "月末日に読了。",
+    "rule": { "type": "DATE_PATTERN", "lastOfMonth": true }
+  },
+  {
+    "id": "A085",
+    "name": "春告げ本",
+    "category": "date",
+    "description": "3月に3冊以上。",
+    "rule": { "type": "MONTH_READS_BY_MONTH", "month": 3, "gte": 3 }
+  },
+  {
+    "id": "A086",
+    "name": "夏バテ知らず",
+    "category": "date",
+    "description": "8月に3冊以上。",
+    "rule": { "type": "MONTH_READS_BY_MONTH", "month": 8, "gte": 3 }
+  },
+  {
+    "id": "A087",
+    "name": "秋の夜長連盟",
+    "category": "date",
+    "description": "10月に5冊以上。",
+    "rule": { "type": "MONTH_READS_BY_MONTH", "month": 10, "gte": 5 }
+  },
+  {
+    "id": "A088",
+    "name": "本納め師",
+    "category": "date",
+    "description": "12月に10冊以上。",
+    "rule": { "type": "MONTH_READS_BY_MONTH", "month": 12, "gte": 10 }
+  },
+  {
+    "id": "A089",
+    "name": "多読日和",
+    "category": "date",
+    "description": "同月で読了日が10日以上存在。",
+    "rule": { "type": "MONTH_DISTINCT_DAYS", "gte": 10 }
+  },
+  {
+    "id": "A090",
+    "name": "四週連続入稿",
+    "category": "date",
+    "description": "同月で4週連続読了。",
+    "rule": { "type": "MONTH_EACH_WEEK_HAS_READ" }
+  },
+
+  {
+    "id": "A091",
+    "name": "初バックアップ記念",
+    "category": "action",
+    "description": "初めてJSONエクスポート。",
+    "rule": { "type": "USER_ACTION", "event": "exportCount", "gte": 1 }
+  },
+  {
+    "id": "A092",
+    "name": "復元の達人",
+    "category": "action",
+    "description": "JSONインポート実行。",
+    "rule": { "type": "USER_ACTION", "event": "importCount", "gte": 1 }
+  },
+  {
+    "id": "A093",
+    "name": "編集の鬼",
+    "category": "action",
+    "description": "同一本を3回以上編集保存。",
+    "rule": { "type": "EDIT_SAME_BOOK_GTE", "gte": 3 }
+  },
+  {
+    "id": "A094",
+    "name": "削除も勇気",
+    "category": "action",
+    "description": "本を1件削除。",
+    "rule": { "type": "USER_ACTION", "event": "deleteCount", "gte": 1 }
+  },
+  {
+    "id": "A095",
+    "name": "星取表係",
+    "category": "action",
+    "description": "初めて★評価を付与。",
+    "rule": { "type": "USER_ACTION", "event": "rateCount", "gte": 1 }
+  },
+  {
+    "id": "A096",
+    "name": "両極端評論家",
+    "category": "action",
+    "description": "同一月に★5と★1を両方付ける。",
+    "rule": { "type": "MONTH_RATING_BOTH" }
+  },
+  {
+    "id": "A097",
+    "name": "検索依存症",
+    "category": "action",
+    "description": "検索累計50回。",
+    "rule": { "type": "USER_ACTION", "event": "searchCount", "gte": 50 }
+  },
+  {
+    "id": "A098",
+    "name": "一発入力派",
+    "category": "action",
+    "description": "新規作成から60秒以内に保存。",
+    "rule": { "type": "USER_ACTION", "event": "fastCreateCount", "gte": 1 }
+  },
+  {
+    "id": "A099",
+    "name": "初登録大成功",
+    "category": "total",
+    "description": "初めて本を登録。",
+    "rule": { "type": "TOTAL_READS", "gte": 1 }
+  },
+  {
+    "id": "A100",
+    "name": "設定いじり隊",
+    "category": "action",
+    "description": "設定を初めて保存。",
+    "rule": { "type": "USER_ACTION", "event": "settingsSaved", "gte": 1 }
   }
 ]
