@@ -244,7 +244,13 @@ function initForm() {
     await handleSubmit(false);
   });
   const handleSubmit = async (cont = false) => {
-    if (!form.reportValidity()) return;
+    try {
+      if (typeof form.reportValidity === "function") {
+        if (!form.reportValidity()) return;
+      } else if (typeof form.checkValidity === "function") {
+        if (!form.checkValidity()) return;
+      }
+    } catch {}
     const data = new FormData(form);
     const payload = {
       title: data.get("title"),
@@ -286,7 +292,9 @@ function initForm() {
       form.title.focus();
     } else {
       clearEditMode();
-      location.hash = "#home";
+      // モバイルでの遷移安定化
+      await Promise.resolve();
+      goHome();
     }
   };
   form.addEventListener("submit", (e) => {
@@ -346,6 +354,21 @@ function clearEditMode() {
   const form = document.getElementById("book-form");
   delete form.dataset.mode;
   delete form.dataset.id;
+}
+
+function goHome() {
+  try {
+    location.hash = "#home";
+  } catch {}
+  // モバイル環境でhash変更が反映されない場合のフォールバック
+  try {
+    Object.entries(views).forEach(([k, el]) => {
+      el.classList.toggle("active", k === "home");
+    });
+    Object.entries(tabs).forEach(([k, el]) => {
+      el.classList.toggle("active", k === "home");
+    });
+  } catch {}
 }
 
 async function renderDetail(id) {
