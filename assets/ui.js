@@ -74,12 +74,9 @@ window.addEventListener("load", () => {
   btnExp?.addEventListener("click", exportJson);
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
-  // ナビゲーションバー上でスワイプしてタブ移動（ループ）
-  const tabsEl =
-    document.querySelector(".tabs") ||
-    document.querySelector(".app-header") ||
-    document.body;
-  attachSwipeTabs(tabsEl);
+  // 画面下（メインコンテンツ）でスワイプしてタブ移動（ループ）
+  const swipeArea = document.getElementById("main") || document.body;
+  attachSwipeTabs(swipeArea);
   // 設定フォーム
   const sf = document.getElementById("settings-form");
   sf?.addEventListener("submit", async (e) => {
@@ -805,6 +802,7 @@ function attachSwipeTabs(container) {
     tracking = false;
     const raw = (location.hash || "#home").slice(1);
     if (!NAV_ORDER.includes(raw)) return; // detail等は対象外
+    if (raw === "calendar") return; // カレンダーは自身のスワイプ優先
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       const idx = NAV_ORDER.indexOf(raw);
       const next =
