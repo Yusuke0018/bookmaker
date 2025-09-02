@@ -281,6 +281,13 @@
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("./sw.js").catch(() => {});
         });
+        navigator.serviceWorker.addEventListener("message", (e) => {
+          const d = e.data || {};
+          if (d.type === "VERSION") {
+            // 新バージョン検知時は即リロード
+            try { location.reload(); } catch {}
+          }
+        });
       }
       // Cache APIは毎回クリア（HTTPキャッシュの制御はブラウザ任せ）
       window.addEventListener("load", async () => {

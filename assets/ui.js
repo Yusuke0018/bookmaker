@@ -232,8 +232,10 @@ function initForm() {
   const markToday = document.getElementById("mark-finished-today");
   // 既定：開始日を今日
   form.startedAt.value = todayISO();
-  markToday.addEventListener("click", () => {
+  markToday.addEventListener("click", async () => {
     form.finishedAt.value = todayISO();
+    // 「今日で読了」時は即保存して編集画面を閉じる
+    await handleSubmit(false);
   });
   const handleSubmit = async (cont = false) => {
     if (!form.reportValidity()) return;
