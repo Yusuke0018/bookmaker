@@ -1,5 +1,5 @@
 // sw.js: 簡易プリキャッシュ（S0）
-const CACHE = "bookmaker-cache-v2";
+const CACHE = "bookmaker-cache-v3";
 const ASSETS = [
   "./",
   "./index.html",
