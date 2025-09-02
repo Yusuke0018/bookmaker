@@ -16,6 +16,7 @@
         <a href="#/home" id="tab-home">ホーム</a>
         <a href="#/calendar" id="tab-calendar">カレンダー</a>
         <a href="#/achievements" id="tab-achievements">実績</a>
+        <button id="btn-settings" class="btn">設定</button>
         <button id="btn-add" class="btn primary">＋ 追加</button>
       </nav>
     </header>
@@ -23,6 +24,7 @@
     <main id="app"></main>
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <input type="file" id="import-file" accept="application/json" style="display: none" />
 
     <dialog id="book-modal" class="modal">
       <form id="book-form" method="dialog">
@@ -49,6 +51,23 @@
         </label>
         <menu class="actions">
           <button value="cancel" class="btn">キャンセル</button>
+          <button value="submit" class="btn primary">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="settings-modal" class="modal">
+      <form id="settings-form" method="dialog">
+        <h3>設定</h3>
+        <label
+          >テーマ
+          <select name="theme">
+            <option value="light">ライト</option>
+            <option value="dark">ダーク</option>
+          </select>
+        </label>
+        <menu class="actions">
+          <button value="cancel" class="btn">閉じる</button>
           <button value="submit" class="btn primary">保存</button>
         </menu>
       </form>

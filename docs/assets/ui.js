@@ -1,11 +1,15 @@
 // ui.js: 描画・ルーティング・イベント
 import {
   Books,
+  Store,
   DateUtil,
   computeStats,
   loadAchievements,
   evaluateAchievements,
   seedDemoIfEmpty,
+  exportAll,
+  importAll,
+  init,
 } from './app.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -34,11 +38,13 @@ function activateTab(hash) {
   else $('#tab-home')?.classList.add('active');
 }
 
-function renderHome() {
+async function renderHome() {
   const el = document.createElement('div');
   el.innerHTML = `
     <section class="section toolbar">
       <input id="q" placeholder="検索（タイトル/著者/感想）" style="flex:1;" />
+      <button id="btn-export" class="btn">エクスポート</button>
+      <button id="btn-import" class="btn">インポート</button>
       <button id="btn-seed" class="btn ghost" title="デモデータ">デモ</button>
     </section>
     <section class="section" id="reunion"></section>
@@ -47,8 +53,7 @@ function renderHome() {
       <div class="list" id="recent"></div>
     </section>
   `;
-
-  const books = Books.list();
+  const books = await Books.list();
   const recent = books.filter((b) => b.finishedAt).slice(0, 10);
   const recentBox = $('#recent', el);
   if (!recent.length) {
@@ -66,7 +71,7 @@ function renderHome() {
   }
 
   // 検索
-  $('#q', el)?.addEventListener('input', (e) => {
+  $('#q', el)?.addEventListener('input', async (e) => {
     const q = e.target.value.toLowerCase();
     const result = books.filter((b) =>
       (b.title + ' ' + b.author + ' ' + (b.reviewText || '')).toLowerCase().includes(q),
@@ -75,26 +80,75 @@ function renderHome() {
     if (!result.length) recentBox.innerHTML = `<div class="empty">まだ棚にない言葉です。</div>`;
     else result.slice(0, 50).forEach((b) => recentBox.appendChild(bookCard(b)));
     // 検索イベント: 称号評価（対応しないタイプは無視）
-    const stats = computeStats(Books.list());
-    const newly = evaluateAchievements({
+    await Store.incCounter('searches', 1);
+    const all = await Books.list();
+    const stats = computeStats(all);
+    const counters = await Store.getCounters();
+    const newly = await evaluateAchievements({
       achievements: ACHIEVEMENTS,
       stats,
+      books: all,
+      counters,
       lastEvent: { type: 'search' },
     });
     if (newly.length) showAchievementToasts(newly);
   });
 
   // デモデータ
-  $('#btn-seed', el)?.addEventListener('click', () => {
-    seedDemoIfEmpty();
+  $('#btn-seed', el)?.addEventListener('click', async () => {
+    await seedDemoIfEmpty();
     navigate('#/home');
     Toast.show('デモデータを追加しました');
+  });
+
+  $('#btn-export', el)?.addEventListener('click', async () => {
+    await exportAll();
+    const all = await Books.list();
+    const stats = computeStats(all);
+    const counters = await Store.getCounters();
+    const newly = await evaluateAchievements({
+      achievements: ACHIEVEMENTS,
+      stats,
+      books: all,
+      counters,
+      lastEvent: { type: 'backup' },
+    });
+    if (newly.length) showAchievementToasts(newly);
+    Toast.show('バックアップを保存しました');
+  });
+
+  $('#btn-import', el)?.addEventListener('click', async () => {
+    const inp = document.getElementById('import-file');
+    inp.onchange = async () => {
+      const file = inp.files[0];
+      if (!file) return;
+      const mode = confirm('インポートを「上書き」で行いますか？（キャンセルでマージ）')
+        ? 'overwrite'
+        : 'merge';
+      const text = await file.text();
+      await importAll(text, mode);
+      const all = await Books.list();
+      const stats = computeStats(all);
+      const counters = await Store.getCounters();
+      const newly = await evaluateAchievements({
+        achievements: ACHIEVEMENTS,
+        stats,
+        books: all,
+        counters,
+        lastEvent: { type: 'restore' },
+      });
+      if (newly.length) showAchievementToasts(newly);
+      navigate('#/home');
+      Toast.show('復元が完了しました');
+      inp.value = '';
+    };
+    inp.click();
   });
 
   return el;
 }
 
-function renderCalendar() {
+async function renderCalendar() {
   const el = document.createElement('div');
   el.innerHTML = `
     <section class="section toolbar">
@@ -115,7 +169,7 @@ function renderCalendar() {
   const label = $('#label', el);
   const summary = $('#summary', el);
 
-  const renderMonth = () => {
+  const renderMonth = async () => {
     const y = base.getFullYear();
     const m = base.getMonth();
     label.textContent = `${y}年 ${m + 1}月`;
@@ -125,7 +179,7 @@ function renderCalendar() {
     const last = new Date(y, m + 1, 0);
     const padStart = (first.getDay() + 6) % 7; // 月曜始まり
     const days = last.getDate();
-    const stats = computeStats(Books.list());
+    const stats = computeStats(await Books.list());
     const ymKey = `${y}-${String(m + 1).padStart(2, '0')}`;
     const monthReads = stats.byMonth?.[ymKey] || 0;
     summary.textContent = `今月 ${monthReads} 冊`;
@@ -148,7 +202,7 @@ function renderCalendar() {
     base.setMonth(base.getMonth() + 1);
     renderMonth();
   });
-  renderMonth();
+  await renderMonth();
   return el;
 }
 
@@ -160,26 +214,32 @@ function renderAchievements() {
       <div class="ach-list" id="achs"></div>
     </section>
   `;
-  const unlocked = new Set(
-    JSON.parse(localStorage.getItem('bookmaker:achievements:unlocked') || '[]'),
-  );
+  const unlocked = new Set();
   const box = el.querySelector('#achs');
-  if (!ACHIEVEMENTS.length) {
-    box.innerHTML = `<div class="empty">称号定義を読み込み中です…</div>`;
-    return el;
-  }
-  for (const a of ACHIEVEMENTS) {
-    const card = document.createElement('div');
-    card.className = 'card ach-card';
-    const left = document.createElement('div');
-    left.innerHTML = `<div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-desc">${escapeHtml(a.description || '')}</div>`;
-    const badge = document.createElement('span');
-    const ok = unlocked.has(a.id);
-    badge.className = `ach-badge ${ok ? 'ach-ok' : 'ach-ng'}`;
-    badge.textContent = ok ? '獲得済' : '未獲得';
-    card.appendChild(left);
-    card.appendChild(badge);
-    box.appendChild(card);
+  (async () => {
+    const set = await Store.getUnlocked();
+    set.forEach((id) => unlocked.add(id));
+    fill();
+  })();
+  function fill() {
+    box.innerHTML = '';
+    if (!ACHIEVEMENTS.length) {
+      box.innerHTML = `<div class="empty">称号定義を読み込み中です…</div>`;
+      return;
+    }
+    for (const a of ACHIEVEMENTS) {
+      const card = document.createElement('div');
+      card.className = 'card ach-card';
+      const left = document.createElement('div');
+      left.innerHTML = `<div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-desc">${escapeHtml(a.description || '')}</div>`;
+      const badge = document.createElement('span');
+      const ok = unlocked.has(a.id);
+      badge.className = `ach-badge ${ok ? 'ach-ok' : 'ach-ng'}`;
+      badge.textContent = ok ? '獲得済' : '未獲得';
+      card.appendChild(left);
+      card.appendChild(badge);
+      box.appendChild(card);
+    }
   }
   return el;
 }
@@ -192,7 +252,28 @@ function bookCard(b) {
     <h4>${escapeHtml(b.title)}</h4>
     <div class="meta">${escapeHtml(b.author)} ${d ? ' / ' + d : ''} ${b.rating ? ` / ★${b.rating}` : ''}</div>
     ${b.oneLiner ? `<div class="pill">${escapeHtml(b.oneLiner)}</div>` : ''}
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-edit="${b.id}">編集</button>
+      <button class="btn" data-del="${b.id}">削除</button>
+    </div>
   `;
+  card.querySelector(`[data-edit="${b.id}"]`)?.addEventListener('click', () => openBookModal(b));
+  card.querySelector(`[data-del="${b.id}"]`)?.addEventListener('click', async () => {
+    if (!confirm('削除しますか？')) return;
+    await Books.remove(b.id);
+    const all = await Books.list();
+    const stats = computeStats(all);
+    const counters = await Store.getCounters();
+    const newly = await evaluateAchievements({
+      achievements: ACHIEVEMENTS,
+      stats,
+      books: all,
+      counters,
+      lastEvent: { type: 'delete', book: b },
+    });
+    if (newly.length) showAchievementToasts(newly);
+    navigate('#/home');
+  });
   return card;
 }
 
@@ -237,6 +318,8 @@ function setupModal() {
   const startedInput = form.elements.namedItem('startedAt');
   const finishedToggle = form.elements.namedItem('finishedToggle');
   const finishedAt = form.elements.namedItem('finishedAt');
+  let editingId = null;
+  let openedAt = 0;
 
   // 初期値
   const today = new Date().toISOString();
@@ -250,24 +333,42 @@ function setupModal() {
     e.preventDefault();
     const fd = new FormData(form);
     const data = Object.fromEntries(fd.entries());
-    const book = Books.create({
-      title: data.title,
-      author: data.author,
-      startedAt: new Date(data.startedAt).toISOString(),
-      finished: finishedToggle.checked,
-      finishedAt:
-        finishedToggle.checked && data.finishedAt ? new Date(data.finishedAt).toISOString() : '',
-      rating: data.rating,
-      oneLiner: data.oneLiner,
-      reviewText: data.reviewText,
-    });
+    let book;
+    if (editingId) {
+      book = await Books.update(editingId, {
+        title: data.title,
+        author: data.author,
+        startedAt: new Date(data.startedAt).toISOString(),
+        finishedAt:
+          finishedToggle.checked && data.finishedAt ? new Date(data.finishedAt).toISOString() : '',
+        rating: Number(data.rating || 0),
+        oneLiner: data.oneLiner,
+        reviewText: data.reviewText,
+      });
+    } else {
+      book = await Books.create({
+        title: data.title,
+        author: data.author,
+        startedAt: new Date(data.startedAt).toISOString(),
+        finished: finishedToggle.checked,
+        finishedAt:
+          finishedToggle.checked && data.finishedAt ? new Date(data.finishedAt).toISOString() : '',
+        rating: data.rating,
+        oneLiner: data.oneLiner,
+        reviewText: data.reviewText,
+      });
+    }
     // 集計と称号
-    const stats = computeStats(Books.list());
-    const newly = evaluateAchievements({
+    const all = await Books.list();
+    const stats = computeStats(all);
+    const counters = await Store.getCounters();
+    const durationSec = (Date.now() - openedAt) / 1000;
+    const newly = await evaluateAchievements({
       achievements: ACHIEVEMENTS,
       stats,
-      books: Books.list(),
-      lastEvent: { type: 'save', book },
+      books: all,
+      counters,
+      lastEvent: { type: editingId ? 'edit' : 'save', book, durationSec },
     });
     if (newly.length) showAchievementToasts(newly);
     modal.close();
@@ -275,7 +376,30 @@ function setupModal() {
     Toast.show('綴じました。次のページへ。');
   });
 
-  return { open: () => modal.showModal() };
+  function open(book) {
+    editingId = book?.id || null;
+    openedAt = Date.now();
+    form.reset();
+    const todayIso = new Date().toISOString();
+    startedInput.value = DateUtil.toInputDate(book?.startedAt || todayIso);
+    if (book?.finishedAt) {
+      finishedToggle.checked = true;
+      finishedAt.disabled = false;
+      finishedAt.value = DateUtil.toInputDate(book.finishedAt);
+    } else {
+      finishedToggle.checked = false;
+      finishedAt.disabled = true;
+      finishedAt.value = '';
+    }
+    form.elements.namedItem('title').value = book?.title || '';
+    form.elements.namedItem('author').value = book?.author || '';
+    form.elements.namedItem('rating').value = book?.rating || '';
+    form.elements.namedItem('oneLiner').value = book?.oneLiner || '';
+    form.elements.namedItem('reviewText').value = book?.reviewText || '';
+    modal.showModal();
+  }
+
+  return { open };
 }
 
 // ルーティング
@@ -289,21 +413,23 @@ async function render() {
   activateTab(location.hash || '#/home');
   const root = $('#app');
   root.innerHTML = '';
-  if (location.hash.startsWith('#/calendar')) root.appendChild(renderCalendar());
-  else if (location.hash.startsWith('#/achievements')) root.appendChild(renderAchievements());
-  else root.appendChild(renderHome());
+  if (location.hash.startsWith('#/calendar')) root.appendChild(await renderCalendar());
+  else if (location.hash.startsWith('#/achievements')) root.appendChild(await renderAchievements());
+  else root.appendChild(await renderHome());
 }
 
 // 初期化
 window.addEventListener('DOMContentLoaded', async () => {
   try {
+    await init();
     ACHIEVEMENTS = await loadAchievements();
   } catch {
     ACHIEVEMENTS = [];
   }
-  seedDemoIfEmpty();
+  await seedDemoIfEmpty();
   const modal = setupModal();
   $('#btn-add')?.addEventListener('click', () => modal.open());
+  $('#btn-settings')?.addEventListener('click', () => openSettings());
   window.addEventListener('hashchange', render);
   render();
   // Service Worker（後続で強化）
@@ -311,3 +437,31 @@ window.addEventListener('DOMContentLoaded', async () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 });
+
+function openBookModal(b) {
+  const m = setupModal();
+  m.open(b);
+}
+
+function openSettings() {
+  const modal = document.getElementById('settings-modal');
+  const form = document.getElementById('settings-form');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    await Store.incCounter('settingsSaves', 1);
+    const all = await Books.list();
+    const stats = computeStats(all);
+    const counters = await Store.getCounters();
+    const newly = await evaluateAchievements({
+      achievements: ACHIEVEMENTS,
+      stats,
+      books: all,
+      counters,
+      lastEvent: { type: 'settings' },
+    });
+    if (newly.length) showAchievementToasts(newly);
+    modal.close();
+    Toast.show('設定を保存しました');
+  };
+  modal.showModal();
+}
