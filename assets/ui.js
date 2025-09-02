@@ -18,6 +18,7 @@ const views = {
   add: document.getElementById("view-add"),
   achievements: document.getElementById("view-achievements"),
   settings: document.getElementById("view-settings"),
+  detail: document.getElementById("view-detail"),
 };
 
 const tabs = {
@@ -28,18 +29,27 @@ const tabs = {
   settings: document.getElementById("tab-settings"),
 };
 
+let lastMainView = "home";
 function route() {
-  const hash = (location.hash || "#home").replace("#", "");
+  const raw = (location.hash || "#home").slice(1);
+  let hash = raw;
+  let bookId = null;
+  if (raw.startsWith("book:")) {
+    hash = "detail";
+    bookId = decodeURIComponent(raw.slice(5));
+  }
   Object.entries(views).forEach(([k, el]) => {
     el.classList.toggle("active", k === hash);
   });
   Object.entries(tabs).forEach(([k, el]) => {
     el.classList.toggle("active", k === hash);
   });
+  if (hash !== "detail") lastMainView = hash;
   if (hash === "home") renderHome();
   if (hash === "calendar") renderCalendar();
   if (hash === "achievements") renderAchievements();
   if (hash === "settings") renderSettings();
+  if (hash === "detail" && bookId) renderDetail(bookId);
 }
 
 window.addEventListener("hashchange", route);
@@ -129,7 +139,7 @@ async function renderHome() {
         : "";
       const star = typeof b.rating === "number" ? ` ★${b.rating}` : "";
       const actions = `<div class="row gap" style="margin-top:6px"><button class="btn small" data-edit="${b.id}">編集</button><button class="btn small outline" data-del="${b.id}">削除</button></div>`;
-      return `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}${star}<br><span class="muted">${date}</span> ${one}${actions}</li>`;
+      return `<li data-id="${b.id}"><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}${star}<br><span class="muted">${date}</span> ${one}${actions}</li>`;
     })
     .join("");
   // 日替わり再会（単純なhashで選択）
@@ -166,6 +176,13 @@ async function renderHome() {
       await evaluateAfterEvent("delete");
       renderHome();
     });
+  });
+  // 行クリックで詳細（ボタン以外）
+  list.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    const li = e.target.closest("li[data-id]");
+    if (!li) return;
+    location.hash = `#book:${encodeURIComponent(li.getAttribute("data-id"))}`;
   });
 }
 
@@ -300,6 +317,51 @@ function clearEditMode() {
   const form = document.getElementById("book-form");
   delete form.dataset.mode;
   delete form.dataset.id;
+}
+
+async function renderDetail(id) {
+  const books = await loadBooks();
+  const b = books.find((x) => x.id === id);
+  const title = document.getElementById("detail-title");
+  const meta = document.getElementById("detail-meta");
+  const rating = document.getElementById("detail-rating");
+  const one = document.getElementById("detail-one");
+  const review = document.getElementById("detail-review");
+  const btnEdit = document.getElementById("btn-detail-edit");
+  const btnBack = document.getElementById("btn-detail-back");
+  const backTarget = ["home", "calendar", "achievements", "settings"].includes(
+    lastMainView,
+  )
+    ? `#${lastMainView}`
+    : "#home";
+  if (!b) {
+    title.textContent = "詳細";
+    meta.textContent = "見つかりませんでした";
+    rating.textContent = "";
+    one.textContent = "";
+    review.textContent = "";
+    btnEdit.onclick = null;
+    btnBack.onclick = () => (location.hash = backTarget);
+    return;
+  }
+  title.textContent = b.title;
+  const metaParts = [];
+  metaParts.push(`著者：${escapeHtml(b.author || "")}`);
+  if (b.startedAt) metaParts.push(`開始：${b.startedAt}`);
+  if (b.finishedAt) metaParts.push(`読了：${b.finishedAt}`);
+  meta.innerHTML = metaParts.join(" / ");
+  rating.textContent =
+    typeof b.rating === "number"
+      ? `評価：${"★".repeat(b.rating)}${"☆".repeat(5 - b.rating)}`
+      : "";
+  one.innerHTML = b.oneLiner
+    ? `<strong>一言まとめ：</strong>${escapeHtml(b.oneLiner)}`
+    : "";
+  review.innerHTML = b.reviewText
+    ? `<strong>感想</strong><div>${escapeHtml(b.reviewText).replace(/\n/g, "<br>")}</div>`
+    : "";
+  btnEdit.onclick = () => enterEditMode(b.id);
+  btnBack.onclick = () => (location.hash = backTarget);
 }
 
 async function renderSettings() {
