@@ -1,5 +1,12 @@
 // ui.js: 描画・ルーティング・イベント
-import { Books, DateUtil, computeStats, loadAchievements, evaluateAchievements, seedDemoIfEmpty } from './app.js';
+import {
+  Books,
+  DateUtil,
+  computeStats,
+  loadAchievements,
+  evaluateAchievements,
+  seedDemoIfEmpty,
+} from './app.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -21,8 +28,9 @@ const Toast = {
 let ACHIEVEMENTS = [];
 
 function activateTab(hash) {
-  $$('#tab-home, #tab-calendar').forEach((a) => a.classList.remove('active'));
+  $$('#tab-home, #tab-calendar, #tab-achievements').forEach((a) => a.classList.remove('active'));
   if (hash.startsWith('#/calendar')) $('#tab-calendar')?.classList.add('active');
+  else if (hash.startsWith('#/achievements')) $('#tab-achievements')?.classList.add('active');
   else $('#tab-home')?.classList.add('active');
 }
 
@@ -68,7 +76,11 @@ function renderHome() {
     else result.slice(0, 50).forEach((b) => recentBox.appendChild(bookCard(b)));
     // 検索イベント: 称号評価（対応しないタイプは無視）
     const stats = computeStats(Books.list());
-    const newly = evaluateAchievements({ achievements: ACHIEVEMENTS, stats, lastEvent: { type: 'search' } });
+    const newly = evaluateAchievements({
+      achievements: ACHIEVEMENTS,
+      stats,
+      lastEvent: { type: 'search' },
+    });
     if (newly.length) showAchievementToasts(newly);
   });
 
@@ -137,6 +149,38 @@ function renderCalendar() {
     renderMonth();
   });
   renderMonth();
+  return el;
+}
+
+function renderAchievements() {
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <section class="section">
+      <h3>実績（称号）</h3>
+      <div class="ach-list" id="achs"></div>
+    </section>
+  `;
+  const unlocked = new Set(
+    JSON.parse(localStorage.getItem('bookmaker:achievements:unlocked') || '[]'),
+  );
+  const box = el.querySelector('#achs');
+  if (!ACHIEVEMENTS.length) {
+    box.innerHTML = `<div class="empty">称号定義を読み込み中です…</div>`;
+    return el;
+  }
+  for (const a of ACHIEVEMENTS) {
+    const card = document.createElement('div');
+    card.className = 'card ach-card';
+    const left = document.createElement('div');
+    left.innerHTML = `<div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-desc">${escapeHtml(a.description || '')}</div>`;
+    const badge = document.createElement('span');
+    const ok = unlocked.has(a.id);
+    badge.className = `ach-badge ${ok ? 'ach-ok' : 'ach-ng'}`;
+    badge.textContent = ok ? '獲得済' : '未獲得';
+    card.appendChild(left);
+    card.appendChild(badge);
+    box.appendChild(card);
+  }
   return el;
 }
 
@@ -246,6 +290,7 @@ async function render() {
   const root = $('#app');
   root.innerHTML = '';
   if (location.hash.startsWith('#/calendar')) root.appendChild(renderCalendar());
+  else if (location.hash.startsWith('#/achievements')) root.appendChild(renderAchievements());
   else root.appendChild(renderHome());
 }
 
