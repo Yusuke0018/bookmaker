@@ -16,5 +16,16 @@ bookmaker
 - ビルド: `npm run build`
 - 実行（ビルド済み）: `npm start`
 
+GitHub Pages 公開
+
+- `docs/` 配下に静的SPAを配置しています。
+- 本リポジトリには GitHub Pages 用ワークフロー（.github/workflows/pages.yml）を同梱しています。main へ push すると自動で Pages へ反映されます。
+- 初回のみ、リポジトリ設定 → Pages → Build and deployment の Source を “GitHub Actions” に設定してください。
+
+PWA
+
+- `docs/manifest.json` と `docs/sw.js` を同梱しています。オフライン時も主要画面が動作します。
+- Service Worker のキャッシュバージョンは `docs/sw.js` 内の `VERSION` を更新してください。
+
 ライセンス
 未定（必要に応じて後で追加します）。
