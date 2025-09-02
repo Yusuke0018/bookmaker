@@ -1,7 +1,12 @@
-// app.js: データモデルとストレージ（S0はlocalStorage実装。S1でIndexedDBへ移行）
-export const VERSION = "0.1.0";
-
-const LS_KEY = "bookmaker.books.v1";
+// app.js: データモデルとストレージ（IndexedDB実装）
+import {
+  addBook as dbAdd,
+  getAllBooks as dbAll,
+  updateBook as dbUpdate,
+  deleteBook as dbDel,
+  getBook as dbGet,
+} from "./db.js";
+export const VERSION = "0.2.0";
 
 /** @typedef {Object} Book
  * @property {string} id
@@ -16,27 +21,17 @@ const LS_KEY = "bookmaker.books.v1";
  * @property {string} updatedAt
  */
 
-/** @returns {Book[]} */
-export function loadBooks() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-/** @param {Book[]} books */
-export function saveBooks(books) {
-  localStorage.setItem(LS_KEY, JSON.stringify(books));
+/** @returns {Promise<Book[]>} */
+export async function loadBooks() {
+  return await dbAll();
 }
 
 /** @param {Partial<Book>} data */
-export function createBook(data) {
+export async function createBook(data) {
   const now = new Date().toISOString();
   /** @type {Book} */
   const book = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     title: (data.title || "").trim(),
     author: (data.author || "").trim(),
     startedAt: data.startedAt || "",
@@ -47,15 +42,28 @@ export function createBook(data) {
     createdAt: now,
     updatedAt: now,
   };
-  const books = loadBooks();
-  books.unshift(book);
-  saveBooks(books);
+  await dbAdd(book);
   return book;
 }
 
+/** @param {string} id @param {Partial<Book>} patch */
+export async function updateBook(id, patch) {
+  const existing = await dbGet(id);
+  if (!existing) throw new Error("Book not found");
+  const now = new Date().toISOString();
+  const updated = { ...existing, ...patch, updatedAt: now };
+  await dbUpdate(updated);
+  return updated;
+}
+
+/** @param {string} id */
+export async function deleteBook(id) {
+  await dbDel(id);
+}
+
 /** @param {string} q */
-export function searchBooks(q) {
-  const books = loadBooks();
+export async function searchBooks(q) {
+  const books = await dbAll();
   const needle = q.trim().toLowerCase();
   if (!needle) return books;
   return books.filter((b) =>
@@ -71,4 +79,19 @@ export function todayISO() {
   const d = new Date();
   const tz = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
   return tz.toISOString().slice(0, 10);
+}
+
+function randomUUID() {
+  if (globalThis.crypto && "randomUUID" in globalThis.crypto)
+    return globalThis.crypto.randomUUID();
+  // 簡易フォールバック
+  const s = [...Array(36)].map((_, i) =>
+    i === 14
+      ? "4"
+      : i === 19
+        ? ((Math.random() * 4) | 8).toString(16)
+        : ((Math.random() * 16) | 0).toString(16),
+  );
+  s[8] = s[13] = s[18] = s[23] = "-";
+  return s.join("");
 }

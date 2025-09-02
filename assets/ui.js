@@ -1,5 +1,12 @@
 // ui.js: ルーティングとUIの最小実装
-import { createBook, loadBooks, searchBooks, todayISO } from "./app.js";
+import {
+  createBook,
+  loadBooks,
+  searchBooks,
+  todayISO,
+  updateBook,
+  deleteBook,
+} from "./app.js";
 
 const views = {
   home: document.getElementById("view-home"),
@@ -41,9 +48,9 @@ function showToast(msg) {
 }
 
 // Home
-function renderHome() {
+async function renderHome() {
   const list = document.getElementById("recent-list");
-  const books = loadBooks();
+  const books = await loadBooks();
   list.innerHTML = books
     .map((b) => {
       const date = b.finishedAt || b.startedAt || b.createdAt.slice(0, 10);
@@ -51,7 +58,8 @@ function renderHome() {
         ? `<span class="badge">${escapeHtml(b.oneLiner)}</span>`
         : "";
       const star = typeof b.rating === "number" ? ` ★${b.rating}` : "";
-      return `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}${star}<br><span class="muted">${date}</span> ${one}</li>`;
+      const actions = `<div class="row gap" style="margin-top:6px"><button class="btn small" data-edit="${b.id}">編集</button><button class="btn small outline" data-del="${b.id}">削除</button></div>`;
+      return `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}${star}<br><span class="muted">${date}</span> ${one}${actions}</li>`;
     })
     .join("");
   // 日替わり再会（単純なhashで選択）
@@ -69,12 +77,28 @@ function renderHome() {
   } else {
     reunionWrap.hidden = true;
   }
+
+  // アクション（編集・削除）
+  list.querySelectorAll("button[data-edit]").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      enterEditMode(btn.getAttribute("data-edit")),
+    );
+  });
+  list.querySelectorAll("button[data-del]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-del");
+      if (!confirm("この本を削除します。よろしいですか？")) return;
+      await deleteBook(id);
+      showToast("削除も勇気。綴じ直しました。");
+      renderHome();
+    });
+  });
 }
 
 function initHomeSearch() {
   const q = document.getElementById("q");
-  q.addEventListener("input", () => {
-    const results = searchBooks(q.value);
+  q.addEventListener("input", async () => {
+    const results = await searchBooks(q.value);
     const list = document.getElementById("recent-list");
     list.innerHTML = results
       .map(
@@ -95,7 +119,7 @@ function initForm() {
   markToday.addEventListener("click", () => {
     form.finishedAt.value = todayISO();
   });
-  const handleSubmit = (cont = false) => {
+  const handleSubmit = async (cont = false) => {
     if (!form.reportValidity()) return;
     const data = new FormData(form);
     const payload = {
@@ -107,14 +131,20 @@ function initForm() {
       reviewText: data.get("reviewText"),
       rating: parseNumber(data.get("rating")),
     };
-    createBook(payload);
-    showToast("綴じました。次のページへ。");
-    renderHome();
-    if (cont) {
+    if (form.dataset.mode === "edit" && form.dataset.id) {
+      await updateBook(form.dataset.id, payload);
+      showToast("更新しました。紙背が整いました。");
+    } else {
+      await createBook(payload);
+      showToast("綴じました。次のページへ。");
+    }
+    await renderHome();
+    if (cont && form.dataset.mode !== "edit") {
       form.reset();
       form.startedAt.value = todayISO();
       form.title.focus();
     } else {
+      clearEditMode();
       location.hash = "#home";
     }
   };
@@ -137,4 +167,27 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+async function enterEditMode(id) {
+  const list = await loadBooks();
+  const b = list.find((x) => x.id === id);
+  if (!b) return;
+  const form = document.getElementById("book-form");
+  form.dataset.mode = "edit";
+  form.dataset.id = b.id;
+  form.title.value = b.title;
+  form.author.value = b.author;
+  form.startedAt.value = b.startedAt || "";
+  form.finishedAt.value = b.finishedAt || "";
+  form.oneLiner.value = b.oneLiner || "";
+  form.reviewText.value = b.reviewText || "";
+  form.rating.value = typeof b.rating === "number" ? String(b.rating) : "";
+  location.hash = "#add";
+}
+
+function clearEditMode() {
+  const form = document.getElementById("book-form");
+  delete form.dataset.mode;
+  delete form.dataset.id;
 }

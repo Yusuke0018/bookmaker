@@ -120,6 +120,15 @@ body {
   color: #fff;
   border-color: transparent;
 }
+.btn.small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.btn.outline {
+  background: #fff;
+  border-color: var(--ink);
+  color: var(--ink);
+}
 .list {
   list-style: none;
   padding: 0;

@@ -1,0 +1,9 @@
+Task: S1-1 IndexedDB導入と編集/削除
+Branch: main
+Latest: f0ed9fe
+Changed: 
+ M assets/app.js
+ M assets/style.css
+ M assets/ui.js
+ M sw.js
+?? assets/db.js
