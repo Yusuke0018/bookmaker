@@ -33,9 +33,16 @@ let ACHIEVEMENTS = [];
 
 function activateTab(hash) {
   $$('#tab-home, #tab-calendar, #tab-achievements').forEach((a) => a.classList.remove('active'));
-  if (hash.startsWith('#/calendar')) $('#tab-calendar')?.classList.add('active');
-  else if (hash.startsWith('#/achievements')) $('#tab-achievements')?.classList.add('active');
-  else $('#tab-home')?.classList.add('active');
+  if (hash.startsWith('#/calendar')) {
+    const el = $('#tab-calendar');
+    if (el) el.classList.add('active');
+  } else if (hash.startsWith('#/achievements')) {
+    const el = $('#tab-achievements');
+    if (el) el.classList.add('active');
+  } else {
+    const el = $('#tab-home');
+    if (el) el.classList.add('active');
+  }
 }
 
 async function renderHome() {
@@ -71,62 +78,18 @@ async function renderHome() {
   }
 
   // 検索
-  $('#q', el)?.addEventListener('input', async (e) => {
-    const q = e.target.value.toLowerCase();
-    const result = books.filter((b) =>
-      (b.title + ' ' + b.author + ' ' + (b.reviewText || '')).toLowerCase().includes(q),
-    );
-    recentBox.innerHTML = '';
-    if (!result.length) recentBox.innerHTML = `<div class="empty">まだ棚にない言葉です。</div>`;
-    else result.slice(0, 50).forEach((b) => recentBox.appendChild(bookCard(b)));
-    // 検索イベント: 称号評価（対応しないタイプは無視）
-    await Store.incCounter('searches', 1);
-    const all = await Books.list();
-    const stats = computeStats(all);
-    const counters = await Store.getCounters();
-    const newly = await evaluateAchievements({
-      achievements: ACHIEVEMENTS,
-      stats,
-      books: all,
-      counters,
-      lastEvent: { type: 'search' },
-    });
-    if (newly.length) showAchievementToasts(newly);
-  });
-
-  // デモデータ
-  $('#btn-seed', el)?.addEventListener('click', async () => {
-    await seedDemoIfEmpty();
-    navigate('#/home');
-    Toast.show('デモデータを追加しました');
-  });
-
-  $('#btn-export', el)?.addEventListener('click', async () => {
-    await exportAll();
-    const all = await Books.list();
-    const stats = computeStats(all);
-    const counters = await Store.getCounters();
-    const newly = await evaluateAchievements({
-      achievements: ACHIEVEMENTS,
-      stats,
-      books: all,
-      counters,
-      lastEvent: { type: 'backup' },
-    });
-    if (newly.length) showAchievementToasts(newly);
-    Toast.show('バックアップを保存しました');
-  });
-
-  $('#btn-import', el)?.addEventListener('click', async () => {
-    const inp = document.getElementById('import-file');
-    inp.onchange = async () => {
-      const file = inp.files[0];
-      if (!file) return;
-      const mode = confirm('インポートを「上書き」で行いますか？（キャンセルでマージ）')
-        ? 'overwrite'
-        : 'merge';
-      const text = await file.text();
-      await importAll(text, mode);
+  const qel = $('#q', el);
+  if (qel)
+    qel.addEventListener('input', async (e) => {
+      const q = e.target.value.toLowerCase();
+      const result = books.filter((b) =>
+        (b.title + ' ' + b.author + ' ' + (b.reviewText || '')).toLowerCase().includes(q),
+      );
+      recentBox.innerHTML = '';
+      if (!result.length) recentBox.innerHTML = `<div class="empty">まだ棚にない言葉です。</div>`;
+      else result.slice(0, 50).forEach((b) => recentBox.appendChild(bookCard(b)));
+      // 検索イベント: 称号評価（対応しないタイプは無視）
+      await Store.incCounter('searches', 1);
       const all = await Books.list();
       const stats = computeStats(all);
       const counters = await Store.getCounters();
@@ -135,15 +98,67 @@ async function renderHome() {
         stats,
         books: all,
         counters,
-        lastEvent: { type: 'restore' },
+        lastEvent: { type: 'search' },
       });
       if (newly.length) showAchievementToasts(newly);
+    });
+
+  // デモデータ
+  const seedBtn = $('#btn-seed', el);
+  if (seedBtn)
+    seedBtn.addEventListener('click', async () => {
+      await seedDemoIfEmpty();
       navigate('#/home');
-      Toast.show('復元が完了しました');
-      inp.value = '';
-    };
-    inp.click();
-  });
+      Toast.show('デモデータを追加しました');
+    });
+
+  const exportBtn = $('#btn-export', el);
+  if (exportBtn)
+    exportBtn.addEventListener('click', async () => {
+      await exportAll();
+      const all = await Books.list();
+      const stats = computeStats(all);
+      const counters = await Store.getCounters();
+      const newly = await evaluateAchievements({
+        achievements: ACHIEVEMENTS,
+        stats,
+        books: all,
+        counters,
+        lastEvent: { type: 'backup' },
+      });
+      if (newly.length) showAchievementToasts(newly);
+      Toast.show('バックアップを保存しました');
+    });
+
+  const importBtn = $('#btn-import', el);
+  if (importBtn)
+    importBtn.addEventListener('click', async () => {
+      const inp = document.getElementById('import-file');
+      inp.onchange = async () => {
+        const file = inp.files[0];
+        if (!file) return;
+        const mode = confirm('インポートを「上書き」で行いますか？（キャンセルでマージ）')
+          ? 'overwrite'
+          : 'merge';
+        const text = await file.text();
+        await importAll(text, mode);
+        const all = await Books.list();
+        const stats = computeStats(all);
+        const counters = await Store.getCounters();
+        const newly = await evaluateAchievements({
+          achievements: ACHIEVEMENTS,
+          stats,
+          books: all,
+          counters,
+          lastEvent: { type: 'restore' },
+        });
+        if (newly.length) showAchievementToasts(newly);
+        navigate('#/home');
+        Toast.show('復元が完了しました');
+        inp.value = '';
+      };
+      inp.click();
+    });
 
   return el;
 }
@@ -181,7 +196,7 @@ async function renderCalendar() {
     const days = last.getDate();
     const stats = computeStats(await Books.list());
     const ymKey = `${y}-${String(m + 1).padStart(2, '0')}`;
-    const monthReads = stats.byMonth?.[ymKey] || 0;
+    const monthReads = (stats.byMonth && stats.byMonth[ymKey]) || 0;
     summary.textContent = `今月 ${monthReads} 冊`;
 
     // 空セル（前月の埋め）
@@ -189,7 +204,7 @@ async function renderCalendar() {
     for (let d = 1; d <= days; d++) {
       const iso = new Date(y, m, d).toISOString();
       const key = DateUtil.ymdKeyJst(iso);
-      const count = stats.byDay?.[key] || 0;
+      const count = (stats.byDay && stats.byDay[key]) || 0;
       grid.appendChild(dayCell(d, count));
     }
   };
@@ -257,23 +272,26 @@ function bookCard(b) {
       <button class="btn" data-del="${b.id}">削除</button>
     </div>
   `;
-  card.querySelector(`[data-edit="${b.id}"]`)?.addEventListener('click', () => openBookModal(b));
-  card.querySelector(`[data-del="${b.id}"]`)?.addEventListener('click', async () => {
-    if (!confirm('削除しますか？')) return;
-    await Books.remove(b.id);
-    const all = await Books.list();
-    const stats = computeStats(all);
-    const counters = await Store.getCounters();
-    const newly = await evaluateAchievements({
-      achievements: ACHIEVEMENTS,
-      stats,
-      books: all,
-      counters,
-      lastEvent: { type: 'delete', book: b },
+  const editBtn = card.querySelector(`[data-edit="${b.id}"]`);
+  if (editBtn) editBtn.addEventListener('click', () => openBookModal(b));
+  const delBtn = card.querySelector(`[data-del="${b.id}"]`);
+  if (delBtn)
+    delBtn.addEventListener('click', async () => {
+      if (!confirm('削除しますか？')) return;
+      await Books.remove(b.id);
+      const all = await Books.list();
+      const stats = computeStats(all);
+      const counters = await Store.getCounters();
+      const newly = await evaluateAchievements({
+        achievements: ACHIEVEMENTS,
+        stats,
+        books: all,
+        counters,
+        lastEvent: { type: 'delete', book: b },
+      });
+      if (newly.length) showAchievementToasts(newly);
+      navigate('#/home');
     });
-    if (newly.length) showAchievementToasts(newly);
-    navigate('#/home');
-  });
   return card;
 }
 
@@ -434,28 +452,36 @@ async function bootstrap() {
   }
   await seedDemoIfEmpty();
   const modal = setupModal();
-  $('#btn-add')?.addEventListener('click', () => modal.open());
-  $('#btn-settings')?.addEventListener('click', () => openSettings());
+  const addBtn = $('#btn-add');
+  if (addBtn) addBtn.addEventListener('click', () => modal.open());
+  const settingsBtn = $('#btn-settings');
+  if (settingsBtn) settingsBtn.addEventListener('click', () => openSettings());
   // ナビゲーションをクリックで強制描画（hashchangeの保険）
-  $('#tab-home')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navigate('#/home');
-  });
-  $('#tab-calendar')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navigate('#/calendar');
-  });
-  $('#tab-achievements')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    navigate('#/achievements');
-  });
+  const tabHome = $('#tab-home');
+  if (tabHome)
+    tabHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate('#/home');
+    });
+  const tabCal = $('#tab-calendar');
+  if (tabCal)
+    tabCal.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate('#/calendar');
+    });
+  const tabAch = $('#tab-achievements');
+  if (tabAch)
+    tabAch.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate('#/achievements');
+    });
   window.addEventListener('hashchange', render);
   // 初回描画はエラーを握りつぶさず通知
   try {
     await render();
   } catch (err) {
     console.error(err);
-    Toast.show('描画エラー: ' + (err?.message || String(err)));
+    Toast.show('描画エラー');
   }
   // Service Worker（後続で強化）
   if ('serviceWorker' in navigator) {

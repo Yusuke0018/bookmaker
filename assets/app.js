@@ -144,7 +144,7 @@ export const DateUtil = (() => {
   const toJstDate = (isoOrDate) => {
     const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : new Date(isoOrDate);
     // JS Dateは内部UTC。JSTキー作成のためオフセットを足し引きして日付キー化
-    const t = d.getTime() + (JST_OFFSET_MIN - d.getTimezoneOffset()) * 60_000;
+    const t = d.getTime() + (JST_OFFSET_MIN - d.getTimezoneOffset()) * 60000;
     return new Date(t);
   };
   const ymdKeyJst = (iso) => {
@@ -296,7 +296,7 @@ export async function evaluateAchievements({ achievements, stats, books, counter
         const months = [q * 3 + 1, q * 3 + 2, q * 3 + 3];
         const sum = months
           .map((m) => `${y}-${String(m).padStart(2, '0')}`)
-          .reduce((acc, k) => acc + (stats.byMonth?.[k] || 0), 0);
+          .reduce((acc, k) => acc + ((stats.byMonth && stats.byMonth[k]) || 0), 0);
         return rule.gte != null && sum >= rule.gte;
       }
       case 'HALF_YEAR_READS': {
@@ -305,7 +305,7 @@ export async function evaluateAchievements({ achievements, stats, books, counter
         const h = d.getMonth() < 6 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
         const sum = h
           .map((m) => `${y}-${String(m).padStart(2, '0')}`)
-          .reduce((a, k) => a + (stats.byMonth?.[k] || 0), 0);
+          .reduce((a, k) => a + ((stats.byMonth && stats.byMonth[k]) || 0), 0);
         return rule.gte != null && sum >= rule.gte;
       }
       case 'MONTH_WEEKS_ALL_GTE': {
@@ -319,7 +319,8 @@ export async function evaluateAchievements({ achievements, stats, books, counter
           const iso = new Date(y, m, day).toISOString();
           weeks.add(DateUtil.isoWeekKeyJst(iso));
         }
-        for (const w of weeks) if ((stats.byWeek?.[w] || 0) < (rule.gte || 1)) return false;
+        for (const w of weeks)
+          if (((stats.byWeek && stats.byWeek[w]) || 0) < (rule.gte || 1)) return false;
         return true;
       }
       case 'STREAK_DAYS':
@@ -327,18 +328,18 @@ export async function evaluateAchievements({ achievements, stats, books, counter
 
       // 速度・日付
       case 'SAME_DAY_FINISH': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b || !b.finishedAt || !b.startedAt) return false;
         return DateUtil.ymdKeyJst(b.finishedAt) === DateUtil.ymdKeyJst(b.startedAt);
       }
       case 'DURATION_HOURS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b || !b.finishedAt || !b.startedAt) return false;
         const hrs = (new Date(b.finishedAt) - new Date(b.startedAt)) / 3600000;
         return rule.lte != null ? hrs <= rule.lte : false;
       }
       case 'DURATION_DAYS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b || !b.finishedAt || !b.startedAt) return false;
         const ds = daysBetween(b.startedAt, b.finishedAt);
         if (rule.lte != null) return ds <= rule.lte;
@@ -346,21 +347,21 @@ export async function evaluateAchievements({ achievements, stats, books, counter
         return false;
       }
       case 'DAY_FINISH_COUNT': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b || !b.finishedAt) return false;
         const ymd = DateUtil.ymdKeyJst(b.finishedAt);
-        const count = stats.byDay?.[ymd] || 0;
+        const count = (stats.byDay && stats.byDay[ymd]) || 0;
         return rule.gte != null && count >= rule.gte;
       }
       case 'WEEKEND_START_END': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b || !b.startedAt || !b.finishedAt) return false;
         return weekday(b.startedAt) === 6 && weekday(b.finishedAt) === 0; // Sat -> Sun
       }
 
       // テキスト系
       case 'REVIEW_CHARS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const len = (b.reviewText || '').length;
         if (rule.lte != null) return len <= rule.lte;
@@ -368,7 +369,7 @@ export async function evaluateAchievements({ achievements, stats, books, counter
         return false;
       }
       case 'REVIEW_LINE_COUNT': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const lines = (b.reviewText || '').split(/\n/).length;
         if (rule.lte != null) return lines <= rule.lte;
@@ -376,7 +377,7 @@ export async function evaluateAchievements({ achievements, stats, books, counter
         return false;
       }
       case 'REVIEW_CONTAINS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const t = b.reviewText || '';
         return (rule.any || []).some((w) => t.includes(w));
@@ -384,35 +385,35 @@ export async function evaluateAchievements({ achievements, stats, books, counter
 
       // 一言系
       case 'ONELINER_CHARS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const len = (b.oneLiner || '').length;
         return rule.lte != null && len <= rule.lte;
       }
       case 'ONELINER_CHARS_EQ': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         return (b.oneLiner || '').length === rule.eq;
       }
       case 'ONELINER_NO_PERIOD': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const s = (b.oneLiner || '').trim();
         return s && !/[。.]/.test(s.slice(-1));
       }
       case 'ONELINER_CONTAINS': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         const s = b.oneLiner || '';
         return (rule.any || []).some((w) => s.includes(w));
       }
       case 'ONELINER_CONTAINS_DIGIT': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         return /[0-9０-９]/.test(b.oneLiner || '');
       }
       case 'ONELINER_CONTAINS_ALPHA': {
-        const b = lastEvent?.book;
+        const b = lastEvent && lastEvent.book;
         if (!b) return false;
         return /[A-Za-z]/.test(b.oneLiner || '');
       }
@@ -614,7 +615,7 @@ export async function evaluateAchievements({ achievements, stats, books, counter
       case 'SEARCH_COUNT':
         return (counters.searches || 0) >= (rule.gte || 0);
       case 'QUICK_SAVE_SECONDS': {
-        const sec = lastEvent?.durationSec;
+        const sec = lastEvent && lastEvent.durationSec;
         if (sec == null) return false;
         return sec <= (rule.lte || 60);
       }
