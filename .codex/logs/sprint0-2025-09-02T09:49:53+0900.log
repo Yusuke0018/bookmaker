@@ -1,0 +1,19 @@
+timestamp: 2025-09-02T09:49:53+0900
+branch: main
+commit: f26d478633707418011101b0ccba4b3c84c5c134
+diffstat:
+f26d478 feat: static SPA scaffold under docs (Sprint 0)
+ docs/assets/achievements.json | 131 +++++++++++++++++++++
+ docs/assets/app.js            | 228 +++++++++++++++++++++++++++++++++++
+ docs/assets/style.css         | 229 ++++++++++++++++++++++++++++++++++++
+ docs/assets/ui.js             | 268 ++++++++++++++++++++++++++++++++++++++++++
+ docs/icons/icon-192.png       | Bin 0 -> 68 bytes
+ docs/icons/icon-512.png       | Bin 0 -> 68 bytes
+ docs/index.html               |  59 ++++++++++
+ docs/manifest.json            |  12 ++
+ docs/sw.js                    |   3 +
+ eslint.config.mjs             |  10 ++
+ package.json                  |   4 +-
+ 11 files changed, 942 insertions(+), 2 deletions(-)
+tests: passed (1)
+push: success

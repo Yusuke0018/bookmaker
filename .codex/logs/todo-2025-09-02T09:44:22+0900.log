@@ -1,0 +1,9 @@
+timestamp: 2025-09-02T09:44:22+0900
+branch: main
+commit: 5cdae6f5bce2b42314ff60203ab080541563d428
+diffstat:
+5cdae6f docs: TODO/ロードマップを追加（要件統合）
+ TODO.md | 127 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 127 insertions(+)
+tests: passed (1)
+push: success

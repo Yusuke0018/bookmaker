@@ -1,0 +1,11 @@
+timestamp: 2025-09-02T10:35:56+0900
+branch: main
+commit: c1113d706d706d0eaca348610c06faf537d53fe1
+diffstat:
+c1113d7 feat(pwa): 強化したService WorkerとPages自動デプロイ
+ .github/workflows/pages.yml | 38 +++++++++++++++++++++++++
+ README.md                   | 11 ++++++++
+ docs/sw.js                  | 67 +++++++++++++++++++++++++++++++++++++++++----
+ 3 files changed, 111 insertions(+), 5 deletions(-)
+tests: passed (1)
+push: success

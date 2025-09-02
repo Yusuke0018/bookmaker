@@ -1,0 +1,11 @@
+timestamp: 2025-09-02T10:33:11+0900
+branch: main
+commit: 71703026d9e246430f752857d03f76dbf84d32b7
+diffstat:
+7170302 feat: IndexedDB実装・バックアップ/復元・編集/削除・設定
+ docs/assets/app.js | 603 ++++++++++++++++++++++++++++++++++++++++++++++++-----
+ docs/assets/ui.js  | 256 ++++++++++++++++++-----
+ docs/index.html    |  19 ++
+ 3 files changed, 780 insertions(+), 98 deletions(-)
+tests: passed (1)
+push: success

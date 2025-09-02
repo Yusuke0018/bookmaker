@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# OS/Editor
+.DS_Store
+.vscode/
+
+# Codex logs (keep tracked if needed via .codex/* rule)
+.codex/logs/*.tmp
+
