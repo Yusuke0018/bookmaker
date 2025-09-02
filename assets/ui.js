@@ -436,11 +436,46 @@ window.addEventListener('DOMContentLoaded', async () => {
   const modal = setupModal();
   $('#btn-add')?.addEventListener('click', () => modal.open());
   $('#btn-settings')?.addEventListener('click', () => openSettings());
+  // ナビゲーションをクリックで強制描画（hashchangeの保険）
+  $('#tab-home')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigate('#/home');
+  });
+  $('#tab-calendar')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigate('#/calendar');
+  });
+  $('#tab-achievements')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigate('#/achievements');
+  });
   window.addEventListener('hashchange', render);
-  render();
+  // 初回描画はエラーを握りつぶさず通知
+  try {
+    await render();
+  } catch (err) {
+    console.error(err);
+    Toast.show('描画エラー: ' + (err?.message || String(err)));
+  }
   // Service Worker（後続で強化）
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+});
+
+// 予期しないエラーをトーストで可視化
+window.addEventListener('error', (e) => {
+  try {
+    Toast.show('エラー: ' + (e?.error?.message || e?.message || 'unknown'));
+  } catch {
+    /* ignore */
+  }
+});
+window.addEventListener('unhandledrejection', (e) => {
+  try {
+    Toast.show('エラー: ' + (e?.reason?.message || String(e?.reason) || 'unknown'));
+  } catch {
+    /* ignore */
   }
 });
 

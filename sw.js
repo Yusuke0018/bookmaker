@@ -1,5 +1,5 @@
 // PWA Service Worker (precache + runtime cache)
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.0.2';
 const PRECACHE = `bookmaker-precache-${VERSION}`;
 const RUNTIME = `bookmaker-runtime-${VERSION}`;
 const ASSETS = [
