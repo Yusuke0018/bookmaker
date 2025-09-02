@@ -108,6 +108,12 @@ window.addEventListener("load", () => {
   });
 });
 
+// ルート変更やEscapeでモーダルを閉じる
+window.addEventListener("hashchange", () => closeModal());
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
 function showToast(msg) {
   const el = document.getElementById("toast");
   el.textContent = msg;
