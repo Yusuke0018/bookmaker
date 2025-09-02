@@ -264,28 +264,32 @@ function initForm() {
     if (form.dataset.mode === "edit" && form.dataset.id) {
       await updateBook(form.dataset.id, payload);
       showToast("更新しました。紙背が整いました。");
-      const stats = await getStats();
-      stats.actions = { ...(stats.actions || {}) };
-      stats.actions.editCounts = stats.actions.editCounts || {};
-      stats.actions.editCounts[form.dataset.id] =
-        (stats.actions.editCounts[form.dataset.id] || 0) + 1;
-      if (typeof payload.rating === "number")
-        stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
-      await putStats(stats);
+      try {
+        const stats = await getStats();
+        stats.actions = { ...(stats.actions || {}) };
+        stats.actions.editCounts = stats.actions.editCounts || {};
+        stats.actions.editCounts[form.dataset.id] =
+          (stats.actions.editCounts[form.dataset.id] || 0) + 1;
+        if (typeof payload.rating === "number")
+          stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
+        await putStats(stats);
+      } catch {}
     } else {
       await createBook(payload);
       showToast("綴じました。次のページへ。");
-      const stats = await getStats();
-      stats.actions = { ...(stats.actions || {}) };
-      if ((payload.startedAt || "") === todayISO())
-        stats.actions.fastCreateCount =
-          (stats.actions.fastCreateCount || 0) + 1;
-      if (typeof payload.rating === "number")
-        stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
-      await putStats(stats);
+      try {
+        const stats = await getStats();
+        stats.actions = { ...(stats.actions || {}) };
+        if ((payload.startedAt || "") === todayISO())
+          stats.actions.fastCreateCount =
+            (stats.actions.fastCreateCount || 0) + 1;
+        if (typeof payload.rating === "number")
+          stats.actions.rateCount = (stats.actions.rateCount || 0) + 1;
+        await putStats(stats);
+      } catch {}
     }
-    await evaluateAfterEvent("createOrEdit");
-    await renderHome();
+    try { await evaluateAfterEvent("createOrEdit"); } catch {}
+    try { await renderHome(); } catch {}
     if (cont && form.dataset.mode !== "edit") {
       form.reset();
       form.startedAt.value = todayISO();
@@ -362,13 +366,17 @@ function goHome() {
   } catch {}
   // モバイル環境でhash変更が反映されない場合のフォールバック
   try {
+    route();
+  } catch {}
+  setTimeout(() => {
+    try { route(); } catch {}
     Object.entries(views).forEach(([k, el]) => {
       el.classList.toggle("active", k === "home");
     });
     Object.entries(tabs).forEach(([k, el]) => {
       el.classList.toggle("active", k === "home");
     });
-  } catch {}
+  }, 0);
 }
 
 async function renderDetail(id) {
