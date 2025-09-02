@@ -182,6 +182,15 @@ async function renderHome() {
       renderHome();
     });
   });
+  // 行（ボタン以外）タップで詳細へ
+  list.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return; // ボタンは除外
+    const li = e.target.closest("li");
+    if (!li) return;
+    const editBtn = li.querySelector("button[data-edit]");
+    const id = editBtn?.getAttribute("data-edit");
+    if (id) location.hash = `#book:${encodeURIComponent(id)}`;
+  });
   // 行クリックで詳細（ボタン以外）
   list.addEventListener("click", (e) => {
     if (e.target.closest("button")) return;
