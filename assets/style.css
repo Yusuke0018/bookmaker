@@ -192,11 +192,9 @@ body {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 1;
 }
 .modal-content {
   position: relative;
-  z-index: 2;
   background: var(--card);
   color: var(--ink);
   border: 1px solid var(--line);
