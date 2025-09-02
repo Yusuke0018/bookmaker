@@ -329,8 +329,10 @@ function showAchievementToasts(list) {
   for (const a of list) Toast.show(`称号獲得：${a.name}`);
 }
 
-// 追加モーダル
+// 追加モーダル（シングルトン）
+let modalApi = null;
 function setupModal() {
+  if (modalApi) return modalApi;
   const modal = $('#book-modal');
   const form = $('#book-form');
   const startedInput = form.elements.namedItem('startedAt');
@@ -423,7 +425,8 @@ function setupModal() {
     }
   }
 
-  return { open };
+  modalApi = { open };
+  return modalApi;
 }
 
 // ルーティング
