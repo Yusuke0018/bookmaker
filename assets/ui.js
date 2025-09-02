@@ -463,6 +463,10 @@ function initCalendar() {
   mMonth?.addEventListener("click", () => setMode("month"));
   mWeek?.addEventListener("click", () => setMode("week"));
   mYear?.addEventListener("click", () => setMode("year"));
+
+  // スワイプで前後へ（スマホ向け）。安全のためX方向が優位な時のみ反応。
+  const calView = document.getElementById("view-calendar");
+  if (calView) attachSwipeNavigation(calView);
 }
 
 function moveMonth(delta) {
@@ -671,6 +675,41 @@ function setMode(mode) {
       el.setAttribute("aria-pressed", id === `mode-${mode}` ? "true" : "false");
   });
   renderCalendar();
+}
+
+function attachSwipeNavigation(container) {
+  let sx = 0,
+    sy = 0,
+    dx = 0,
+    dy = 0,
+    tracking = false;
+  const onStart = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    tracking = true;
+    sx = t.clientX;
+    sy = t.clientY;
+    dx = dy = 0;
+  };
+  const onMove = (e) => {
+    if (!tracking) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    dx = t.clientX - sx;
+    dy = t.clientY - sy;
+  };
+  const onEnd = () => {
+    if (!tracking) return;
+    tracking = false;
+    // 水平方向が優位かつ一定距離以上
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      if (dx < 0) moveMonth(1);
+      else moveMonth(-1);
+    }
+  };
+  container.addEventListener("touchstart", onStart, { passive: true });
+  container.addEventListener("touchmove", onMove, { passive: true });
+  container.addEventListener("touchend", onEnd, { passive: true });
 }
 
 function inRange(d, start, end) {
