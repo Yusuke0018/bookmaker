@@ -8,7 +8,7 @@
     <script>
       // ルートURL自体にもバージョンを付与してPWAの起動URLを更新
       (function () {
-        var V = "20250902-05";
+        var V = "20250902-06";
         try {
           var u = new URL(location.href);
           if (u.searchParams.get("v") !== V) {
@@ -31,7 +31,7 @@
       content="black-translucent"
     />
     <meta http-equiv="Cache-Control" content="no-store" />
-    <link rel="stylesheet" href="./assets/style.css?v=20250902-05" />
+    <link rel="stylesheet" href="./assets/style.css?v=20250902-06" />
   </head>
   <body>
     <header class="app-header">
@@ -39,6 +39,7 @@
       <nav class="tabs" role="tablist" aria-label="ナビゲーション">
         <a href="#home" id="tab-home" class="tab active">ホーム</a>
         <a href="#calendar" id="tab-calendar" class="tab">カレンダー</a>
+        <a href="#stats" id="tab-stats" class="tab">統計</a>
         <a href="#add" id="tab-add" class="tab">追加</a>
         <a href="#achievements" id="tab-achievements" class="tab">実績</a>
         <a href="#settings" id="tab-settings" class="tab">設定</a>
@@ -168,6 +169,32 @@
         </div>
       </section>
 
+      <section id="view-stats" class="view" aria-labelledby="tab-stats">
+        <div class="card">
+          <div class="row gap" style="justify-content: space-between; align-items:center; margin-bottom:8px;">
+            <h2 class="h2">統計</h2>
+            <button id="reload-stats" class="btn small">再読み込み</button>
+          </div>
+          <div class="kpi-grid" id="stats-kpis"></div>
+        </div>
+        <div class="card">
+          <div class="h2">直近8週</div>
+          <div class="bar-grid" id="stats-week-bars" aria-label="週次棒グラフ"></div>
+        </div>
+        <div class="card">
+          <div class="h2">直近12か月</div>
+          <div class="bar-grid" id="stats-month-bars" aria-label="月次棒グラフ"></div>
+        </div>
+        <div class="card">
+          <div class="h2">年別合計</div>
+          <ul class="list" id="stats-year-list"></ul>
+        </div>
+        <div class="card">
+          <div class="h2">著者ランキング（上位5）</div>
+          <ul class="list" id="stats-top-authors"></ul>
+        </div>
+      </section>
+
       <section id="view-add" class="view" aria-labelledby="tab-add">
         <form id="book-form" class="card" autocomplete="off">
           <h2 class="h2">新規作成</h2>
@@ -286,9 +313,9 @@
 
     <div id="toast" role="status" class="toast" hidden></div>
 
-    <script src="./assets/app.js?v=20250902-05" type="module"></script>
-    <script src="./assets/achievements.js?v=20250902-05" type="module"></script>
-    <script src="./assets/ui.js?v=20250902-05" type="module"></script>
+    <script src="./assets/app.js?v=20250902-06" type="module"></script>
+    <script src="./assets/achievements.js?v=20250902-06" type="module"></script>
+    <script src="./assets/ui.js?v=20250902-06" type="module"></script>
     <script>
       // 可能なら軽量SWを登録（キャッシュはしない）
       if ("serviceWorker" in navigator) {
@@ -304,7 +331,7 @@
           } catch (e) {}
           try {
             const reg = await navigator.serviceWorker.register(
-              "./sw-v20250902-05.js",
+              "./sw-v20250902-06.js",
               { updateViaCache: "none" },
             );
             try { reg.update(); } catch {}

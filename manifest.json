@@ -1,7 +1,7 @@
 {
   "name": "ブックメイカー（却本作り）",
   "short_name": "ブックメイカー",
-  "start_url": "/bookmaker/?v=20250902-05",
+  "start_url": "/bookmaker/?v=20250902-06",
   "scope": "/bookmaker/",
   "display": "standalone",
   "background_color": "#FAF7F2",

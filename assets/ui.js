@@ -12,13 +12,14 @@ import { getStats, putStats, rebuildStats } from "./stats.js";
 import { loadSettings, saveSettings, applyTheme } from "./settings.js";
 import { getAllAchState } from "./db.js";
 
-const NAV_ORDER = ["home", "calendar", "add", "achievements", "settings"];
+const NAV_ORDER = ["home", "calendar", "stats", "add", "achievements", "settings"];
 
 const views = {
   home: document.getElementById("view-home"),
   calendar: document.getElementById("view-calendar"),
   add: document.getElementById("view-add"),
   achievements: document.getElementById("view-achievements"),
+  stats: document.getElementById("view-stats"),
   settings: document.getElementById("view-settings"),
   detail: document.getElementById("view-detail"),
 };
@@ -28,6 +29,7 @@ const tabs = {
   calendar: document.getElementById("tab-calendar"),
   add: document.getElementById("tab-add"),
   achievements: document.getElementById("tab-achievements"),
+  stats: document.getElementById("tab-stats"),
   settings: document.getElementById("tab-settings"),
 };
 
@@ -50,6 +52,7 @@ function route() {
   if (hash === "home") renderHome();
   if (hash === "calendar") renderCalendar();
   if (hash === "achievements") renderAchievements();
+  if (hash === "stats") renderStats();
   if (hash === "settings") renderSettings();
   if (hash === "detail" && bookId) renderDetail(bookId);
 }
@@ -68,6 +71,8 @@ window.addEventListener("load", () => {
     .catch(() => {});
   const rel = document.getElementById("reload-ach");
   rel?.addEventListener("click", () => renderAchievements());
+  const relStats = document.getElementById("reload-stats");
+  relStats?.addEventListener("click", () => renderStats());
   const btnExp = document.getElementById("btn-export");
   const btnImp = document.getElementById("btn-import");
   const fileImp = document.getElementById("file-import");
@@ -881,6 +886,98 @@ function suggestNext(defs, got, books) {
     }
   }
   return candidates.sort((a, b) => a.remain - b.remain).map((x) => x.def);
+}
+
+// Stats view
+async function renderStats() {
+  const books = await loadBooks();
+  const stats = await rebuildStats(books);
+
+  // KPIs
+  const now = new Date();
+  const wr = weekRange(now);
+  const thisWeek = books.filter((b) => b.finishedAt && inRange(new Date(b.finishedAt), wr.start, wr.end)).length;
+  const ym = todayISO().slice(0, 7);
+  const thisMonth = stats.byMonth[ym] || 0;
+  const yy = todayISO().slice(0, 4);
+  const thisYear = stats.byYear[yy] || 0;
+  const kpis = document.getElementById("stats-kpis");
+  if (kpis) {
+    kpis.innerHTML = [
+      { name: "今週", val: thisWeek },
+      { name: "今月", val: thisMonth },
+      { name: "今年", val: thisYear },
+      { name: "合計", val: stats.totals.reads || 0 },
+      { name: "連続読了", val: stats.streak?.current || 0 },
+      { name: "最長連続", val: stats.streak?.max || 0 },
+      { name: "著者数", val: stats.authors?.unique || 0 },
+    ]
+      .slice(0, 8)
+      .map((x) => `<div class="kpi"><div class="name">${x.name}</div><div class="val">${x.val}</div></div>`)
+      .join("");
+  }
+
+  // Last 8 weeks bars
+  const wbars = document.getElementById("stats-week-bars");
+  if (wbars) {
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i * 7);
+      const w = weekRange(d);
+      const n = books.filter((b) => b.finishedAt && inRange(new Date(b.finishedAt), w.start, w.end)).length;
+      const lab = `${w.start.getMonth() + 1}/${w.start.getDate()}`;
+      weeks.push({ label: lab, count: n });
+    }
+    const max = Math.max(1, ...weeks.map((x) => x.count));
+    wbars.innerHTML = weeks
+      .map((x) => {
+        const h = Math.round((x.count / max) * 140) + 10; // min 10px
+        return `<div class="bar"><div class="col" style="height:${h}px"></div><div class="label">${x.label}<br>(${x.count})</div></div>`;
+      })
+      .join("");
+  }
+
+  // Last 12 months bars
+  const mbars = document.getElementById("stats-month-bars");
+  if (mbars) {
+    const months = [];
+    const base = new Date(now.getFullYear(), now.getMonth(), 1);
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+      const ym2 = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const n = stats.byMonth[ym2] || 0;
+      const lab = `${d.getMonth() + 1}月`;
+      months.push({ label: lab, count: n });
+    }
+    const max = Math.max(1, ...months.map((x) => x.count));
+    mbars.innerHTML = months
+      .map((x) => {
+        const h = Math.round((x.count / max) * 140) + 10;
+        return `<div class="bar"><div class="col" style="height:${h}px"></div><div class="label">${x.label}<br>(${x.count})</div></div>`;
+      })
+      .join("");
+  }
+
+  // Year list
+  const ylist = document.getElementById("stats-year-list");
+  if (ylist) {
+    const entries = Object.entries(stats.byYear).sort((a, b) => a[0].localeCompare(b[0]));
+    ylist.innerHTML = entries
+      .map(([y, c]) => `<li><strong>${y}年</strong> — <span class="badge">${c}</span></li>`)
+      .join("");
+  }
+
+  // Top authors
+  const top = document.getElementById("stats-top-authors");
+  if (top) {
+    const arr = Object.entries(stats.authors.counts || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    top.innerHTML = arr
+      .map(([name, c]) => `<li><strong>${escapeHtml(name)}</strong> — <span class="badge">${c}</span></li>`)
+      .join("");
+  }
 }
 
 // Export / Import
