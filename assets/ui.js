@@ -8,6 +8,7 @@ import {
   deleteBook,
 } from "./app.js";
 import { evaluateAndSave, loadAchievementDefs } from "./achievements.js";
+import { getAllAchState } from "./db.js";
 
 const views = {
   home: document.getElementById("view-home"),
@@ -64,6 +65,9 @@ function showToast(msg) {
 // Home
 async function renderHome() {
   const list = document.getElementById("recent-list");
+  const grid = document.getElementById("cal-grid");
+  const ul = document.getElementById("cal-day-ul");
+  if (!grid || !ul) return;
   const books = await loadBooks();
   list.innerHTML = books
     .map((b) => {
@@ -217,6 +221,7 @@ function clearEditMode() {
 // Calendar
 let calYear;
 let calMonth; // 1-12
+let calMode = "month"; // month | week | year
 
 function initCalendar() {
   const now = new Date();
@@ -226,27 +231,61 @@ function initCalendar() {
   const next = document.getElementById("cal-next");
   prev?.addEventListener("click", () => moveMonth(-1));
   next?.addEventListener("click", () => moveMonth(1));
+  const mMonth = document.getElementById("mode-month");
+  const mWeek = document.getElementById("mode-week");
+  const mYear = document.getElementById("mode-year");
+  mMonth?.addEventListener("click", () => setMode("month"));
+  mWeek?.addEventListener("click", () => setMode("week"));
+  mYear?.addEventListener("click", () => setMode("year"));
 }
 
 function moveMonth(delta) {
-  calMonth += delta;
-  if (calMonth <= 0) {
-    calMonth = 12;
-    calYear -= 1;
-  } else if (calMonth >= 13) {
-    calMonth = 1;
-    calYear += 1;
+  if (calMode === "year") {
+    calYear += delta;
+  } else {
+    calMonth += delta;
+    if (calMonth <= 0) {
+      calMonth = 12;
+      calYear -= 1;
+    } else if (calMonth >= 13) {
+      calMonth = 1;
+      calYear += 1;
+    }
   }
   renderCalendar();
 }
 
 async function renderCalendar() {
   const label = document.getElementById("cal-label");
-  const grid = document.getElementById("cal-grid");
-  const ul = document.getElementById("cal-day-ul");
-  if (!label || !grid || !ul) return;
+  if (!label) return;
+  const wrapMonth = document.getElementById("cal-month");
+  const wrapWeek = document.getElementById("cal-week");
+  const wrapYear = document.getElementById("cal-year");
+  if (calMode === "week") {
+    if (wrapMonth) wrapMonth.hidden = true;
+    if (wrapYear) wrapYear.hidden = true;
+    if (wrapWeek) wrapWeek.hidden = false;
+    const wr = weekRange(new Date());
+    label.textContent = `${wr.start.getMonth() + 1}/${wr.start.getDate()} - ${wr.end.getMonth() + 1}/${wr.end.getDate()}`;
+    await renderWeekInner();
+    return;
+  }
+  if (calMode === "year") {
+    if (wrapMonth) wrapMonth.hidden = true;
+    if (wrapWeek) wrapWeek.hidden = true;
+    if (wrapYear) wrapYear.hidden = false;
+    label.textContent = `${calYear}年`;
+    await renderYearInner();
+    return;
+  }
+  if (wrapMonth) wrapMonth.hidden = false;
+  if (wrapWeek) wrapWeek.hidden = true;
+  if (wrapYear) wrapYear.hidden = true;
   label.textContent = `${calYear}年 ${calMonth}月`;
+  await renderMonthInner();
+}
 
+async function renderMonthInner() {
   const books = await loadBooks();
   const counts = new Map(); // key: yyyy-mm-dd -> count
   const listByDay = new Map();
@@ -302,8 +341,12 @@ async function renderCalendar() {
     });
   });
 
-  // 合計ラベル
+  // 合計ラベルを更新
   const totalMonth = [...counts.values()].reduce((a, b) => a + b, 0);
+  updateCalSummary(books, totalMonth);
+}
+
+function updateCalSummary(books, totalMonth) {
   const now = new Date();
   const weekInfo = weekRange(now);
   const year = now.getFullYear();
@@ -318,6 +361,72 @@ async function renderCalendar() {
   const summary = document.getElementById("cal-summary");
   if (summary)
     summary.textContent = `今週 ${totalWeek} / 今月 ${totalMonth} / 今年 ${totalYear}`;
+}
+
+async function renderWeekInner() {
+  const ul = document.getElementById("cal-week-ul");
+  if (!ul) return;
+  const books = await loadBooks();
+  const wr = weekRange(new Date());
+  const arr = books.filter(
+    (b) => b.finishedAt && inRange(new Date(b.finishedAt), wr.start, wr.end),
+  );
+  const map = new Map(); // dow -> list
+  arr.forEach((b) => {
+    const d = new Date(b.finishedAt + "T00:00:00");
+    const dow = (d.getDay() + 6) % 7; // Mon..Sun
+    if (!map.has(dow)) map.set(dow, []);
+    map.get(dow).push(b);
+  });
+  const labels = ["月", "火", "水", "木", "金", "土", "日"];
+  ul.innerHTML = labels
+    .map((lab, i) => {
+      const items = map.get(i) || [];
+      const li = items
+        .map(
+          (b) =>
+            `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`,
+        )
+        .join("");
+      return `<li><span class="badge">${lab}</span> (${items.length})<br>${li}</li>`;
+    })
+    .join("");
+  updateCalSummary(books, arr.length);
+}
+
+async function renderYearInner() {
+  const bars = document.getElementById("year-bars");
+  if (!bars) return;
+  const books = await loadBooks();
+  const months = Array(12).fill(0);
+  for (const b of books) {
+    if (!b.finishedAt) continue;
+    const y = Number(b.finishedAt.slice(0, 4));
+    const m = Number(b.finishedAt.slice(5, 7));
+    if (y === calYear) months[m - 1] += 1;
+  }
+  const max = Math.max(1, ...months);
+  bars.innerHTML = months
+    .map((cnt, idx) => {
+      const h = Math.max(4, Math.round((cnt / max) * 140));
+      const mo = idx + 1;
+      return `<div class="bar"><div class="col" style="height:${h}px"></div><div class="label">${mo}月<br>${cnt}</div></div>`;
+    })
+    .join("");
+  updateCalSummary(
+    books,
+    months.reduce((a, b) => a + b, 0),
+  );
+}
+
+function setMode(mode) {
+  calMode = mode;
+  ["mode-month", "mode-week", "mode-year"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el)
+      el.setAttribute("aria-pressed", id === `mode-${mode}` ? "true" : "false");
+  });
+  renderCalendar();
 }
 
 function inRange(d, start, end) {
@@ -347,21 +456,17 @@ async function renderAchievements() {
   if (!listEl) return;
   const defs = await loadAchievementDefs();
   // 現在取得済み（achState）はDBから読み、id集合化
-  // ここでは ui.js からは直接参照しないため、評価時に取得済みが更新される想定。
-  // 最新状態を反映するため、evaluateAndSaveの副作用後のレンダリングが望ましい。
-  // 簡易的に、いまのbooksから再評価を走らせ、achStateを更新してから描画する。
   try {
     const books = await loadBooks();
-    await evaluateAndSave(books);
+    await evaluateAndSave(books); // 未取得があれば付与
   } catch {}
-  // achState一覧を再取得したいが、ここでは簡易表示として、達成済みはローカルにトーストで把握済みとし、
-  // 一旦すべて未達成扱い→将来拡張で色付け更新
-  // 当面は総数とターゲット提示のみ行う。
+  const state = await getAllAchState();
+  const got = new Set(state.map((s) => s.id));
   listEl.innerHTML = defs
-    .map(
-      (d) =>
-        `<div class="ach-item"><div class="name">${escapeHtml(d.name)}</div><div class="desc">${escapeHtml(d.description)}</div></div>`,
-    )
+    .map((d) => {
+      const cl = got.has(d.id) ? "ach-item got" : "ach-item";
+      return `<div class="${cl}"><div class="name">${escapeHtml(d.name)}</div><div class="desc">${escapeHtml(d.description)}</div></div>`;
+    })
     .join("");
 }
 

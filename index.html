@@ -77,12 +77,39 @@
               <div id="cal-label" class="h2"></div>
               <button id="cal-next" class="btn small">▶︎</button>
             </div>
-            <div id="cal-summary" class="muted"></div>
+            <div class="row gap">
+              <button id="mode-month" class="btn small" aria-pressed="true">
+                月
+              </button>
+              <button id="mode-week" class="btn small" aria-pressed="false">
+                週
+              </button>
+              <button id="mode-year" class="btn small" aria-pressed="false">
+                年
+              </button>
+            </div>
           </div>
-          <div class="cal-grid" id="cal-grid" aria-label="月ヒートマップ"></div>
-          <div id="cal-day-list" class="card" style="margin-top: 12px">
-            <div class="h2">選択日の読了一覧</div>
-            <ul class="list" id="cal-day-ul"></ul>
+          <div id="cal-summary" class="muted" style="margin-bottom: 8px"></div>
+          <div id="cal-month" class="cal-month">
+            <div
+              class="cal-grid"
+              id="cal-grid"
+              aria-label="月ヒートマップ"
+            ></div>
+            <div id="cal-day-list" class="card" style="margin-top: 12px">
+              <div class="h2">選択日の読了一覧</div>
+              <ul class="list" id="cal-day-ul"></ul>
+            </div>
+          </div>
+          <div id="cal-week" class="cal-week" hidden>
+            <ul class="list" id="cal-week-ul"></ul>
+          </div>
+          <div id="cal-year" class="cal-year" hidden>
+            <div
+              class="bar-grid"
+              id="year-bars"
+              aria-label="年次棒グラフ"
+            ></div>
           </div>
         </div>
       </section>

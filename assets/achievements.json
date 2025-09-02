@@ -68,5 +68,33 @@
     "category": "total",
     "description": "累計150冊を達成しました。",
     "rule": { "type": "TOTAL_READS", "gte": 150 }
+  },
+  {
+    "id": "A021",
+    "name": "二連読",
+    "category": "streak",
+    "description": "2日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 2 }
+  },
+  {
+    "id": "A022",
+    "name": "三連読",
+    "category": "streak",
+    "description": "3日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 3 }
+  },
+  {
+    "id": "A019",
+    "name": "七連読",
+    "category": "streak",
+    "description": "7日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 7 }
+  },
+  {
+    "id": "A025",
+    "name": "月面着陸",
+    "category": "streak",
+    "description": "30日連続で読了しました。",
+    "rule": { "type": "STREAK_DAYS", "gte": 30 }
   }
 ]
