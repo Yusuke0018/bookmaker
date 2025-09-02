@@ -179,6 +179,36 @@ body {
   border: 1px solid var(--line);
 }
 
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+.modal-content {
+  position: relative;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  width: min(720px, 94vw);
+  max-height: 80vh;
+  overflow: auto;
+}
+.modal .meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* Achievements */
 .ach-grid {
   display: grid;

@@ -128,7 +128,7 @@ async function renderHome() {
         ? `<span class="badge">${escapeHtml(b.oneLiner)}</span>`
         : "";
       const star = typeof b.rating === "number" ? ` ★${b.rating}` : "";
-      const actions = `<div class="row gap" style="margin-top:6px"><button class="btn small" data-edit="${b.id}">編集</button><button class="btn small outline" data-del="${b.id}">削除</button></div>`;
+      const actions = `<div class="row gap" style="margin-top:6px"><button class="btn small" data-detail="${b.id}">詳細</button><button class="btn small" data-edit="${b.id}">編集</button><button class="btn small outline" data-del="${b.id}">削除</button></div>`;
       return `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}${star}<br><span class="muted">${date}</span> ${one}${actions}</li>`;
     })
     .join("");
@@ -141,12 +141,20 @@ async function renderHome() {
         new Date().getDate()) %
       books.length;
     const b = books[idx];
-    document.getElementById("reunion").innerHTML =
-      `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`;
+    const r = document.getElementById("reunion");
+    r.innerHTML = `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`;
+    r.dataset.id = b.id;
     reunionWrap.hidden = false;
   } else {
     reunionWrap.hidden = true;
   }
+  document.getElementById("reunion")?.addEventListener("click", async (e) => {
+    const id = e.currentTarget?.dataset?.id;
+    if (!id) return;
+    const books2 = await loadBooks();
+    const b2 = books2.find((x) => x.id === id);
+    if (b2) openDetailModal(b2);
+  });
 
   // アクション（編集・削除）
   list.querySelectorAll("button[data-edit]").forEach((btn) => {
@@ -165,6 +173,14 @@ async function renderHome() {
       await putStats(stats);
       await evaluateAfterEvent("delete");
       renderHome();
+    });
+  });
+  list.querySelectorAll("button[data-detail]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-detail");
+      const books2 = await loadBooks();
+      const b = books2.find((x) => x.id === id);
+      if (b) openDetailModal(b);
     });
   });
 }
@@ -262,6 +278,43 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function openDetailModal(b) {
+  const modal = document.getElementById("modal");
+  const body = document.getElementById("modal-body");
+  const btnClose = document.getElementById("modal-close");
+  const btnEdit = document.getElementById("modal-edit");
+  document.getElementById("modal-title").textContent = b.title;
+  const metaParts = [];
+  metaParts.push(`著者：${escapeHtml(b.author || "")}`);
+  if (b.startedAt) metaParts.push(`開始：${b.startedAt}`);
+  if (b.finishedAt) metaParts.push(`読了：${b.finishedAt}`);
+  const rating =
+    typeof b.rating === "number"
+      ? `評価：${"★".repeat(b.rating)}${"☆".repeat(5 - b.rating)}`
+      : "";
+  const one = b.oneLiner
+    ? `<p><strong>一言まとめ：</strong>${escapeHtml(b.oneLiner)}</p>`
+    : "";
+  const review = b.reviewText
+    ? `<div><strong>感想</strong><div>${escapeHtml(b.reviewText).replace(/\n/g, "<br>")}</div></div>`
+    : "";
+  body.innerHTML = `<div class="meta">${metaParts.join(
+    " / ",
+  )}</div>${rating ? `<div class="meta" style="margin-top:4px">${rating}</div>` : ""}${one}${review}`;
+  btnEdit.onclick = () => {
+    closeModal();
+    enterEditMode(b.id);
+  };
+  btnClose.onclick = () => closeModal();
+  document.getElementById("modal-backdrop").onclick = () => closeModal();
+  modal.hidden = false;
+}
+
+function closeModal() {
+  const modal = document.getElementById("modal");
+  modal.hidden = true;
 }
 
 function pickDailyQuote() {
@@ -488,10 +541,18 @@ async function renderMonthInner() {
       ul.innerHTML = items
         .map(
           (b) =>
-            `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</li>`,
+            `<li data-id=\"${b.id}\"><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</li>`,
         )
         .join("");
     });
+  });
+  ul.addEventListener("click", async (e) => {
+    const li = e.target.closest("li[data-id]");
+    if (!li) return;
+    const id = li.getAttribute("data-id");
+    const books2 = await loadBooks();
+    const b = books2.find((x) => x.id === id);
+    if (b) openDetailModal(b);
   });
 
   // 合計ラベルを更新
@@ -539,12 +600,20 @@ async function renderWeekInner() {
       const li = items
         .map(
           (b) =>
-            `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`,
+            `<div data-id=\"${b.id}\"><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`,
         )
         .join("");
-      return `<li><span class="badge">${lab}</span> (${items.length})<br>${li}</li>`;
+      return `<li><span class=\"badge\">${lab}</span> (${items.length})<br>${li}</li>`;
     })
     .join("");
+  ul.addEventListener("click", async (e) => {
+    const el = e.target.closest("[data-id]");
+    if (!el) return;
+    const id = el.getAttribute("data-id");
+    const books2 = await loadBooks();
+    const b = books2.find((x) => x.id === id);
+    if (b) openDetailModal(b);
+  });
   updateCalSummary(books, arr.length);
 }
 

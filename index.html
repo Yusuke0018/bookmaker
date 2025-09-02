@@ -238,6 +238,32 @@
 
     <div id="toast" role="status" class="toast" hidden></div>
 
+    <div id="modal" class="modal" hidden>
+      <div class="modal-backdrop" id="modal-backdrop"></div>
+      <div
+        class="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <div
+          class="row gap"
+          style="
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          "
+        >
+          <h2 id="modal-title" class="h2">詳細</h2>
+          <div class="row gap">
+            <button id="modal-edit" class="btn small">編集</button>
+            <button id="modal-close" class="btn small outline">閉じる</button>
+          </div>
+        </div>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
     <script src="./assets/app.js" type="module"></script>
     <script src="./assets/achievements.js" type="module"></script>
     <script src="./assets/ui.js" type="module"></script>
