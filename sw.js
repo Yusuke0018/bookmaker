@@ -1,5 +1,5 @@
 // sw.js: 強制更新用の軽量SW（バージョン付与でキャッシュ回避）
-const VERSION = "v20250902-01";
+const VERSION = "v20250902-02";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

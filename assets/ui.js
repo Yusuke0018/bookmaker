@@ -75,7 +75,7 @@ window.addEventListener("load", () => {
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
   // 画面下（メインコンテンツ）でスワイプしてタブ移動（ループ）
-  attachSwipeTabs(document.getElementById("main") || document.body);
+  attachSwipeTabs(document.body);
   // 設定フォーム
   const sf = document.getElementById("settings-form");
   sf?.addEventListener("submit", async (e) => {
@@ -690,6 +690,12 @@ function attachSwipeNavigation(container) {
   const onStart = (e) => {
     const t = e.touches?.[0];
     if (!t) return;
+    // 入力要素上でのスワイプは無視
+    const tg = e.target;
+    if (tg && tg.closest && tg.closest("input, textarea, select, button, a, label")) {
+      tracking = false;
+      return;
+    }
     tracking = true;
     sx = t.clientX;
     sy = t.clientY;
