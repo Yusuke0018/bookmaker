@@ -1,0 +1,131 @@
+[
+  {
+    "id": "a001",
+    "name": "初手一冊",
+    "category": "総数",
+    "description": "累計1冊",
+    "rule": { "type": "TOTAL_READS", "gte": 1 }
+  },
+  {
+    "id": "a002",
+    "name": "三冊の法則",
+    "category": "総数",
+    "description": "累計3冊",
+    "rule": { "type": "TOTAL_READS", "gte": 3 }
+  },
+  {
+    "id": "a003",
+    "name": "手の平の図書館",
+    "category": "総数",
+    "description": "累計5冊",
+    "rule": { "type": "TOTAL_READS", "gte": 5 }
+  },
+  {
+    "id": "a004",
+    "name": "十冊侍",
+    "category": "総数",
+    "description": "累計10冊",
+    "rule": { "type": "TOTAL_READS", "gte": 10 }
+  },
+  {
+    "id": "a005",
+    "name": "二十冊走法",
+    "category": "総数",
+    "description": "累計20冊",
+    "rule": { "type": "TOTAL_READS", "gte": 20 }
+  },
+  {
+    "id": "a006",
+    "name": "三十冊ドリブラー",
+    "category": "総数",
+    "description": "累計30冊",
+    "rule": { "type": "TOTAL_READS", "gte": 30 }
+  },
+  {
+    "id": "a007",
+    "name": "図書筋50",
+    "category": "総数",
+    "description": "累計50冊",
+    "rule": { "type": "TOTAL_READS", "gte": 50 }
+  },
+  {
+    "id": "a008",
+    "name": "本棚ジャンキー",
+    "category": "総数",
+    "description": "累計75冊",
+    "rule": { "type": "TOTAL_READS", "gte": 75 }
+  },
+  {
+    "id": "a009",
+    "name": "百冊の壁ドン",
+    "category": "総数",
+    "description": "累計100冊",
+    "rule": { "type": "TOTAL_READS", "gte": 100 }
+  },
+  {
+    "id": "a010",
+    "name": "頁の暴走族",
+    "category": "総数",
+    "description": "累計150冊",
+    "rule": { "type": "TOTAL_READS", "gte": 150 }
+  },
+
+  {
+    "id": "a011",
+    "name": "週刊ビブリオ",
+    "category": "週",
+    "description": "同一週2冊以上",
+    "rule": { "type": "WEEK_READS", "gte": 2 }
+  },
+  {
+    "id": "a012",
+    "name": "月刊しおり",
+    "category": "月",
+    "description": "同一月5冊以上",
+    "rule": { "type": "MONTH_READS", "gte": 5 }
+  },
+  {
+    "id": "a013",
+    "name": "月間書痩せ",
+    "category": "月",
+    "description": "同一月10冊以上",
+    "rule": { "type": "MONTH_READS", "gte": 10 }
+  },
+
+  {
+    "id": "a019",
+    "name": "七連読",
+    "category": "連続",
+    "description": "7日連続読了",
+    "rule": { "type": "STREAK_DAYS", "gte": 7 }
+  },
+  {
+    "id": "a025",
+    "name": "月面着陸",
+    "category": "連続",
+    "description": "30日連続読了",
+    "rule": { "type": "STREAK_DAYS", "gte": 30 }
+  },
+
+  {
+    "id": "a041",
+    "name": "五十字の矢",
+    "category": "テキスト",
+    "description": "感想50字以内",
+    "rule": { "type": "REVIEW_CHARS", "lte": 50 }
+  },
+  {
+    "id": "a042",
+    "name": "一四〇の悟り",
+    "category": "テキスト",
+    "description": "感想140字以内",
+    "rule": { "type": "REVIEW_CHARS", "lte": 140 }
+  },
+  {
+    "id": "a043",
+    "name": "三百字職人",
+    "category": "テキスト",
+    "description": "感想300字以上",
+    "rule": { "type": "REVIEW_CHARS", "gte": 300 }
+  }
+]

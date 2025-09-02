@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ブックメイカー</title>
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <meta name="theme-color" content="#0F172A" />
+    <link rel="stylesheet" href="./assets/style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">📑 ブックメイカー</div>
+      <nav class="tabs">
+        <a href="#/home" id="tab-home">ホーム</a>
+        <a href="#/calendar" id="tab-calendar">カレンダー</a>
+        <button id="btn-add" class="btn primary">＋ 追加</button>
+      </nav>
+    </header>
+
+    <main id="app"></main>
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <dialog id="book-modal" class="modal">
+      <form id="book-form" method="dialog">
+        <h3>本を追加/編集</h3>
+        <label>タイトル <input required name="title" /></label>
+        <label>著者 <input required name="author" /></label>
+        <div class="row">
+          <label>開始日 <input type="date" name="startedAt" /></label>
+          <label><input type="checkbox" name="finishedToggle" /> 読了</label>
+          <label>読了日 <input type="date" name="finishedAt" disabled /></label>
+        </div>
+        <label>★評価（0–5） <input type="number" name="rating" min="0" max="5" step="1" /></label>
+        <label
+          >一言まとめ（20字）
+          <input name="oneLiner" maxlength="20" />
+        </label>
+        <label
+          >感想
+          <textarea
+            name="reviewText"
+            rows="4"
+            placeholder="自由に書いてOK（空でも保存可）"
+          ></textarea>
+        </label>
+        <menu class="actions">
+          <button value="cancel" class="btn">キャンセル</button>
+          <button value="submit" class="btn primary">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script type="module" src="./assets/app.js"></script>
+    <script type="module" src="./assets/ui.js"></script>
+  </body>
+</html>

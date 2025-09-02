@@ -20,4 +20,14 @@ export default [
       'no-console': 'off',
     },
   },
+  // Browser scripts under docs/
+  {
+    files: ['docs/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.es2022,
+      },
+    },
+  },
 ];
