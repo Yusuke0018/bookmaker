@@ -1,9 +1,17 @@
 // app.js: 状態・データ層・集計・称号（IndexedDB 実装）
 
 // IndexedDB ラッパ
+let USE_LS = false; // IDB不可時にlocalStorageにフォールバック
 function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('bookmaker', 1);
+  return new Promise((resolve) => {
+    let req;
+    try {
+      req = indexedDB.open('bookmaker', 1);
+    } catch {
+      USE_LS = true;
+      resolve(null);
+      return;
+    }
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('books')) {
@@ -20,7 +28,10 @@ function openDB() {
       }
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => {
+      USE_LS = true;
+      resolve(null);
+    };
   });
 }
 
@@ -38,6 +49,14 @@ async function withStore(storeName, mode, fn) {
 
 const Meta = {
   async get(key, fallback) {
+    if (USE_LS) {
+      try {
+        const v = localStorage.getItem(`bookmaker:meta:${key}`);
+        return v ? JSON.parse(v) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
     return withStore('meta', 'readonly', (st) => st.get(key)).then(
       (req) =>
         new Promise((resolve) => {
@@ -47,6 +66,10 @@ const Meta = {
     );
   },
   async set(key, value) {
+    if (USE_LS) {
+      localStorage.setItem(`bookmaker:meta:${key}`, JSON.stringify(value));
+      return;
+    }
     return withStore('meta', 'readwrite', (st) => st.put({ key, value }));
   },
 };
@@ -78,17 +101,19 @@ export const Store = (() => {
     const lsBooksRaw = localStorage.getItem('bookmaker:books');
     if (lsBooksRaw) {
       const lsBooks = JSON.parse(lsBooksRaw);
-      const existing = await withStore('books', 'readonly', (st) => st.getAll()).then(
-        (req) =>
-          new Promise((resolve) => {
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => resolve([]);
-          }),
-      );
-      if (!existing.length && lsBooks.length) {
-        await withStore('books', 'readwrite', (st) => {
-          lsBooks.forEach((b) => st.put(b));
-        });
+      if (!USE_LS) {
+        const existing = await withStore('books', 'readonly', (st) => st.getAll()).then(
+          (req) =>
+            new Promise((resolve) => {
+              req.onsuccess = () => resolve(req.result || []);
+              req.onerror = () => resolve([]);
+            }),
+        );
+        if (!existing.length && lsBooks.length) {
+          await withStore('books', 'readwrite', (st) => {
+            lsBooks.forEach((b) => st.put(b));
+          });
+        }
       }
       localStorage.removeItem('bookmaker:books');
     }
@@ -617,6 +642,10 @@ export async function evaluateAchievements({ achievements, stats, books, counter
 // 本の永続化API（最小）
 export const Books = {
   async list() {
+    if (USE_LS) {
+      const all = JSON.parse(localStorage.getItem('bookmaker:books') || '[]');
+      return all.sort((a, b) => (b.finishedAt || '').localeCompare(a.finishedAt || ''));
+    }
     const all = await withStore('books', 'readonly', (st) => st.getAll()).then(
       (req) =>
         new Promise((resolve) => {
@@ -640,12 +669,31 @@ export const Books = {
       createdAt: now,
       updatedAt: now,
     };
-    await withStore('books', 'readwrite', (st) => st.put(book));
+    if (USE_LS) {
+      const all = JSON.parse(localStorage.getItem('bookmaker:books') || '[]');
+      all.push(book);
+      localStorage.setItem('bookmaker:books', JSON.stringify(all));
+    } else {
+      await withStore('books', 'readwrite', (st) => st.put(book));
+    }
     // カウンタ
     await Store.incCounter('creates', 1);
     return book;
   },
   async update(id, patch) {
+    if (USE_LS) {
+      const all = JSON.parse(localStorage.getItem('bookmaker:books') || '[]');
+      const book = all.find((b) => b.id === id) || null;
+      if (!book) return null;
+      const next = { ...book, ...patch, updatedAt: Store.nowIso() };
+      const nextAll = all.map((b) => (b.id === id ? next : b));
+      localStorage.setItem('bookmaker:books', JSON.stringify(nextAll));
+      const c = await Store.getCounters();
+      c.editsByBook = c.editsByBook || {};
+      c.editsByBook[id] = (c.editsByBook[id] || 0) + 1;
+      await Store.setCounters(c);
+      return next;
+    }
     const book = await withStore('books', 'readonly', (st) => st.get(id)).then(
       (req) =>
         new Promise((resolve) => {
@@ -656,7 +704,6 @@ export const Books = {
     if (!book) return null;
     const next = { ...book, ...patch, updatedAt: Store.nowIso() };
     await withStore('books', 'readwrite', (st) => st.put(next));
-    // 編集カウント
     const c = await Store.getCounters();
     c.editsByBook = c.editsByBook || {};
     c.editsByBook[id] = (c.editsByBook[id] || 0) + 1;
@@ -664,7 +711,13 @@ export const Books = {
     return next;
   },
   async remove(id) {
-    await withStore('books', 'readwrite', (st) => st.delete(id));
+    if (USE_LS) {
+      const all = JSON.parse(localStorage.getItem('bookmaker:books') || '[]');
+      const next = all.filter((b) => b.id !== id);
+      localStorage.setItem('bookmaker:books', JSON.stringify(next));
+    } else {
+      await withStore('books', 'readwrite', (st) => st.delete(id));
+    }
     await Store.incCounter('deletes', 1);
   },
 };
@@ -711,12 +764,21 @@ export async function exportAll() {
 export async function importAll(json, mode = 'merge') {
   const data = typeof json === 'string' ? JSON.parse(json) : json;
   if (mode === 'overwrite') {
-    // Clear books store
-    await withStore('books', 'readwrite', (st) => st.clear());
+    if (USE_LS) {
+      localStorage.setItem('bookmaker:books', JSON.stringify([]));
+    } else {
+      await withStore('books', 'readwrite', (st) => st.clear());
+    }
   }
   // books
   for (const b of data.books || []) {
-    await withStore('books', 'readwrite', (st) => st.put(b));
+    if (USE_LS) {
+      const all = JSON.parse(localStorage.getItem('bookmaker:books') || '[]');
+      all.push(b);
+      localStorage.setItem('bookmaker:books', JSON.stringify(all));
+    } else {
+      await withStore('books', 'readwrite', (st) => st.put(b));
+    }
   }
   // counters/unlocked (merge)
   const c0 = await Store.getCounters();
@@ -733,5 +795,10 @@ export async function importAll(json, mode = 'merge') {
 
 // 初期化フック（移行）
 export async function init() {
+  try {
+    await openDB();
+  } catch {
+    /* no-op */
+  }
   await Store.migrateIfNeeded();
 }
