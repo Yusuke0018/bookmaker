@@ -446,6 +446,26 @@ function openBookModal(b) {
 function openSettings() {
   const modal = document.getElementById('settings-modal');
   const form = document.getElementById('settings-form');
+  const btnClear = document.getElementById('btn-clear-cache');
+  if (btnClear) {
+    btnClear.onclick = async () => {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if (window.caches && caches.keys) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        Toast.show('キャッシュをクリアしました。再読み込みします。');
+        setTimeout(() => location.reload(), 400);
+      } catch (e) {
+        console.error(e);
+        Toast.show('キャッシュクリアに失敗しました');
+      }
+    };
+  }
   form.onsubmit = async (e) => {
     e.preventDefault();
     await Store.incCounter('settingsSaves', 1);
