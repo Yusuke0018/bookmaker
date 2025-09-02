@@ -75,8 +75,7 @@ window.addEventListener("load", () => {
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
   // 画面下（メインコンテンツ）でスワイプしてタブ移動（ループ）
-  const swipeArea = document.getElementById("main") || document.body;
-  attachSwipeTabs(swipeArea);
+  attachSwipeTabs(document.getElementById("main") || document.body);
   // 設定フォーム
   const sf = document.getElementById("settings-form");
   sf?.addEventListener("submit", async (e) => {
@@ -470,8 +469,11 @@ function initCalendar() {
   mYear?.addEventListener("click", () => setMode("year"));
 
   // スワイプで前後へ（スマホ向け）。安全のためX方向が優位な時のみ反応。
-  const calView = document.getElementById("view-calendar");
-  if (calView) attachSwipeNavigation(calView);
+  // カレンダー内スワイプは主要領域に限定（タブスワイプとの競合回避）
+  const monthWrap = document.getElementById("cal-month");
+  const yearWrap = document.getElementById("cal-year");
+  if (monthWrap) attachSwipeNavigation(monthWrap);
+  if (yearWrap) attachSwipeNavigation(yearWrap);
 }
 
 function moveMonth(delta) {
