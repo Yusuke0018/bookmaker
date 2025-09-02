@@ -193,6 +193,9 @@ textarea {
   border-radius: 16px;
   padding: 0;
 }
+.modal[open] {
+  display: block;
+}
 .modal form {
   padding: 16px;
   min-width: 320px;

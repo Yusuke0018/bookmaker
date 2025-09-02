@@ -396,7 +396,13 @@ function setupModal() {
     form.elements.namedItem('rating').value = book?.rating || '';
     form.elements.namedItem('oneLiner').value = book?.oneLiner || '';
     form.elements.namedItem('reviewText').value = book?.reviewText || '';
-    modal.showModal();
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else {
+      // Fallback for browsers without <dialog>
+      modal.setAttribute('open', '');
+      modal.style.display = 'block';
+    }
   }
 
   return { open };
@@ -480,8 +486,18 @@ function openSettings() {
       lastEvent: { type: 'settings' },
     });
     if (newly.length) showAchievementToasts(newly);
-    modal.close();
+    if (typeof modal.close === 'function') {
+      modal.close();
+    } else {
+      modal.removeAttribute('open');
+      modal.style.display = 'none';
+    }
     Toast.show('設定を保存しました');
   };
-  modal.showModal();
+  if (typeof modal.showModal === 'function') {
+    modal.showModal();
+  } else {
+    modal.setAttribute('open', '');
+    modal.style.display = 'block';
+  }
 }
