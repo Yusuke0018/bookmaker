@@ -31,6 +31,7 @@ function route() {
     el.classList.toggle("active", k === hash);
   });
   if (hash === "home") renderHome();
+  if (hash === "calendar") renderCalendar();
 }
 
 window.addEventListener("hashchange", route);
@@ -38,6 +39,7 @@ window.addEventListener("load", () => {
   route();
   initForm();
   initHomeSearch();
+  initCalendar();
 });
 
 function showToast(msg) {
@@ -190,4 +192,98 @@ function clearEditMode() {
   const form = document.getElementById("book-form");
   delete form.dataset.mode;
   delete form.dataset.id;
+}
+
+// Calendar
+let calYear;
+let calMonth; // 1-12
+
+function initCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth() + 1;
+  const prev = document.getElementById("cal-prev");
+  const next = document.getElementById("cal-next");
+  prev?.addEventListener("click", () => moveMonth(-1));
+  next?.addEventListener("click", () => moveMonth(1));
+}
+
+function moveMonth(delta) {
+  calMonth += delta;
+  if (calMonth <= 0) {
+    calMonth = 12;
+    calYear -= 1;
+  } else if (calMonth >= 13) {
+    calMonth = 1;
+    calYear += 1;
+  }
+  renderCalendar();
+}
+
+async function renderCalendar() {
+  const label = document.getElementById("cal-label");
+  const grid = document.getElementById("cal-grid");
+  const ul = document.getElementById("cal-day-ul");
+  if (!label || !grid || !ul) return;
+  label.textContent = `${calYear}年 ${calMonth}月`;
+
+  const books = await loadBooks();
+  const counts = new Map(); // key: yyyy-mm-dd -> count
+  const listByDay = new Map();
+  for (const b of books) {
+    if (!b.finishedAt) continue; // 読了日のみ集計
+    const y = Number(b.finishedAt.slice(0, 4));
+    const m = Number(b.finishedAt.slice(5, 7));
+    if (y === calYear && m === calMonth) {
+      const key = b.finishedAt;
+      counts.set(key, (counts.get(key) || 0) + 1);
+      if (!listByDay.has(key)) listByDay.set(key, []);
+      listByDay.get(key).push(b);
+    }
+  }
+
+  // 月初の曜日（月曜=1...日曜=7）
+  const first = new Date(calYear, calMonth - 1, 1);
+  let w = first.getDay(); // 0-6 (Sun-Sat)
+  w = w === 0 ? 7 : w; // 1-7
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  const cells = [];
+  // 先頭の空白（週始まり: 月曜）
+  for (let i = 1; i < w; i++) cells.push({ empty: true });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${calYear}-${String(calMonth).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const c = counts.get(key) || 0;
+    cells.push({ date: d, key, count: c });
+  }
+
+  const max = Math.max(0, ...[...counts.values()]);
+  const level = (c) =>
+    c === 0 ? 0 : Math.min(5, 1 + Math.floor((c / Math.max(1, max)) * 4));
+  grid.innerHTML = cells
+    .map((cell) => {
+      if (cell.empty)
+        return `<div class="cal-cell" style="visibility:hidden"></div>`;
+      const lv = level(cell.count);
+      return `<div class="cal-cell level-${lv}" data-key="${cell.key}"><div class="date">${cell.date}</div><div class="count">${cell.count}</div></div>`;
+    })
+    .join("");
+
+  // クリックで当日の一覧
+  grid.querySelectorAll(".cal-cell[data-key]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const key = el.getAttribute("data-key");
+      const items = listByDay.get(key) || [];
+      ul.innerHTML = items
+        .map(
+          (b) =>
+            `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</li>`,
+        )
+        .join("");
+    });
+  });
+
+  // 合計ラベル
+  const totalMonth = [...counts.values()].reduce((a, b) => a + b, 0);
+  const summary = document.getElementById("cal-summary");
+  if (summary) summary.textContent = `今月 ${totalMonth} 冊`;
 }

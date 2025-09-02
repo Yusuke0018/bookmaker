@@ -50,8 +50,26 @@
 
       <section id="view-calendar" class="view" aria-labelledby="tab-calendar">
         <div class="card">
-          <h2 class="h2">カレンダー（準備中）</h2>
-          <p class="muted">月ヒートマップと週・年の集計は次段で実装します。</p>
+          <div
+            class="row gap"
+            style="
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <div class="row gap">
+              <button id="cal-prev" class="btn small">◀︎</button>
+              <div id="cal-label" class="h2"></div>
+              <button id="cal-next" class="btn small">▶︎</button>
+            </div>
+            <div id="cal-summary" class="muted"></div>
+          </div>
+          <div class="cal-grid" id="cal-grid" aria-label="月ヒートマップ"></div>
+          <div id="cal-day-list" class="card" style="margin-top: 12px">
+            <div class="h2">選択日の読了一覧</div>
+            <ul class="list" id="cal-day-ul"></ul>
+          </div>
         </div>
       </section>
 
