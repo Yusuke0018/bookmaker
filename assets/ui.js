@@ -75,8 +75,11 @@ window.addEventListener("load", () => {
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
   // ナビゲーションバー上でスワイプしてタブ移動（ループ）
-  const header = document.querySelector(".app-header");
-  if (header) attachSwipeTabs(header);
+  const tabsEl =
+    document.querySelector(".tabs") ||
+    document.querySelector(".app-header") ||
+    document.body;
+  attachSwipeTabs(tabsEl);
   // 設定フォーム
   const sf = document.getElementById("settings-form");
   sf?.addEventListener("submit", async (e) => {
@@ -715,6 +718,43 @@ function attachSwipeNavigation(container) {
   container.addEventListener("touchstart", onStart, { passive: true });
   container.addEventListener("touchmove", onMove, { passive: true });
   container.addEventListener("touchend", onEnd, { passive: true });
+  // Pointer events fallback (一部端末でtouchが発火しない場合)
+  container.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (e.pointerType === "mouse") return; // マウス操作は無視
+      startPointer(e);
+    },
+    { passive: true },
+  );
+  container.addEventListener(
+    "pointermove",
+    (e) => {
+      if (e.pointerType === "mouse") return;
+      movePointer(e);
+    },
+    { passive: true },
+  );
+  container.addEventListener(
+    "pointerup",
+    (e) => {
+      if (e.pointerType === "mouse") return;
+      onEnd();
+    },
+    { passive: true },
+  );
+
+  function startPointer(e) {
+    tracking = true;
+    sx = e.clientX;
+    sy = e.clientY;
+    dx = dy = 0;
+  }
+  function movePointer(e) {
+    if (!tracking) return;
+    dx = e.clientX - sx;
+    dy = e.clientY - sy;
+  }
 }
 
 function inRange(d, start, end) {
