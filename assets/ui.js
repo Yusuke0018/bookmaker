@@ -425,7 +425,7 @@ async function render() {
 }
 
 // 初期化
-window.addEventListener('DOMContentLoaded', async () => {
+async function bootstrap() {
   try {
     await init();
     ACHIEVEMENTS = await loadAchievements();
@@ -461,7 +461,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => {
+    bootstrap();
+  });
+} else {
+  // すでに読み込み済みの場合
+  bootstrap();
+}
 
 // 予期しないエラーをトーストで可視化
 window.addEventListener('error', (e) => {
