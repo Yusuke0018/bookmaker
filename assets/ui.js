@@ -12,6 +12,8 @@ import { getStats, putStats, rebuildStats } from "./stats.js";
 import { loadSettings, saveSettings, applyTheme } from "./settings.js";
 import { getAllAchState } from "./db.js";
 
+const NAV_ORDER = ["home", "calendar", "add", "achievements", "settings"];
+
 const views = {
   home: document.getElementById("view-home"),
   calendar: document.getElementById("view-calendar"),
@@ -72,6 +74,9 @@ window.addEventListener("load", () => {
   btnExp?.addEventListener("click", exportJson);
   btnImp?.addEventListener("click", () => fileImp?.click());
   fileImp?.addEventListener("change", importJson);
+  // ナビゲーションバー上でスワイプしてタブ移動（ループ）
+  const header = document.querySelector(".app-header");
+  if (header) attachSwipeTabs(header);
   // 設定フォーム
   const sf = document.getElementById("settings-form");
   sf?.addEventListener("submit", async (e) => {
@@ -731,6 +736,47 @@ function weekRange(ref) {
     start.getDate() + 6,
   );
   return { start, end };
+}
+
+// --- Swipe tabs on header (loop over NAV_ORDER) ---
+function attachSwipeTabs(container) {
+  let sx = 0,
+    sy = 0,
+    dx = 0,
+    dy = 0,
+    tracking = false;
+  const onStart = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    tracking = true;
+    sx = t.clientX;
+    sy = t.clientY;
+    dx = dy = 0;
+  };
+  const onMove = (e) => {
+    if (!tracking) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    dx = t.clientX - sx;
+    dy = t.clientY - sy;
+  };
+  const onEnd = () => {
+    if (!tracking) return;
+    tracking = false;
+    const raw = (location.hash || "#home").slice(1);
+    if (!NAV_ORDER.includes(raw)) return; // detail等は対象外
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const idx = NAV_ORDER.indexOf(raw);
+      const next =
+        dx < 0
+          ? (idx + 1) % NAV_ORDER.length
+          : (idx - 1 + NAV_ORDER.length) % NAV_ORDER.length;
+      location.hash = `#${NAV_ORDER[next]}`;
+    }
+  };
+  container.addEventListener("touchstart", onStart, { passive: true });
+  container.addEventListener("touchmove", onMove, { passive: true });
+  container.addEventListener("touchend", onEnd, { passive: true });
 }
 
 // Achievements view
