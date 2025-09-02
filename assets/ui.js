@@ -468,12 +468,7 @@ function initCalendar() {
   mWeek?.addEventListener("click", () => setMode("week"));
   mYear?.addEventListener("click", () => setMode("year"));
 
-  // スワイプで前後へ（スマホ向け）。安全のためX方向が優位な時のみ反応。
-  // カレンダー内スワイプは主要領域に限定（タブスワイプとの競合回避）
-  const monthWrap = document.getElementById("cal-month");
-  const yearWrap = document.getElementById("cal-year");
-  if (monthWrap) attachSwipeNavigation(monthWrap);
-  if (yearWrap) attachSwipeNavigation(yearWrap);
+  // カレンダー内スワイプはタブ移動に一元化するため無効化
 }
 
 function moveMonth(delta) {
@@ -804,7 +799,6 @@ function attachSwipeTabs(container) {
     tracking = false;
     const raw = (location.hash || "#home").slice(1);
     if (!NAV_ORDER.includes(raw)) return; // detail等は対象外
-    if (raw === "calendar") return; // カレンダーは自身のスワイプ優先
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       const idx = NAV_ORDER.indexOf(raw);
       const next =
