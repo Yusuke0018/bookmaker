@@ -171,6 +171,35 @@ body {
   border: 1px solid var(--line);
 }
 
+/* Achievements */
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .ach-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.ach-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.ach-item .name {
+  font-weight: 600;
+}
+.ach-item.got {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(234, 179, 8, 0.3);
+}
+.ach-item .desc {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* Calendar */
 .cal-grid {
   display: grid;

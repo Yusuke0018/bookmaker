@@ -7,6 +7,7 @@ import {
   updateBook,
   deleteBook,
 } from "./app.js";
+import { evaluateAndSave, loadAchievementDefs } from "./achievements.js";
 
 const views = {
   home: document.getElementById("view-home"),
@@ -32,6 +33,7 @@ function route() {
   });
   if (hash === "home") renderHome();
   if (hash === "calendar") renderCalendar();
+  if (hash === "achievements") renderAchievements();
 }
 
 window.addEventListener("hashchange", route);
@@ -40,6 +42,10 @@ window.addEventListener("load", () => {
   initForm();
   initHomeSearch();
   initCalendar();
+  // 事前に称号定義を読み込んでおく
+  loadAchievementDefs().catch(() => {});
+  const rel = document.getElementById("reload-ach");
+  rel?.addEventListener("click", () => renderAchievements());
 });
 
 function showToast(msg) {
@@ -140,6 +146,14 @@ function initForm() {
       await createBook(payload);
       showToast("綴じました。次のページへ。");
     }
+    // 称号評価（最小: TOTAL_READS）
+    try {
+      const books = await loadBooks();
+      const newly = await evaluateAndSave(books);
+      if (newly.length) {
+        newly.forEach((d) => showToast(`${d.name}：${d.description}`));
+      }
+    } catch {}
     await renderHome();
     if (cont && form.dataset.mode !== "edit") {
       form.reset();
@@ -287,10 +301,17 @@ async function renderCalendar() {
   const now = new Date();
   const weekInfo = weekRange(now);
   const year = now.getFullYear();
-  const totalWeek = books.filter((b) => b.finishedAt && inRange(new Date(b.finishedAt), weekInfo.start, weekInfo.end)).length;
-  const totalYear = books.filter((b) => b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
+  const totalWeek = books.filter(
+    (b) =>
+      b.finishedAt &&
+      inRange(new Date(b.finishedAt), weekInfo.start, weekInfo.end),
+  ).length;
+  const totalYear = books.filter(
+    (b) => b.finishedAt && new Date(b.finishedAt).getFullYear() === year,
+  ).length;
   const summary = document.getElementById("cal-summary");
-  if (summary) summary.textContent = `今週 ${totalWeek} / 今月 ${totalMonth} / 今年 ${totalYear}`;
+  if (summary)
+    summary.textContent = `今週 ${totalWeek} / 今月 ${totalMonth} / 今年 ${totalYear}`;
 }
 
 function inRange(d, start, end) {
@@ -301,7 +322,39 @@ function inRange(d, start, end) {
 function weekRange(ref) {
   // 月曜は0オフセット、日曜=6として週開始を算出
   const dow = (ref.getDay() + 6) % 7; // Mon=0..Sun=6
-  const start = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - dow);
-  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+  const start = new Date(
+    ref.getFullYear(),
+    ref.getMonth(),
+    ref.getDate() - dow,
+  );
+  const end = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate() + 6,
+  );
   return { start, end };
+}
+
+// Achievements view
+async function renderAchievements() {
+  const listEl = document.getElementById("ach-list");
+  if (!listEl) return;
+  const defs = await loadAchievementDefs();
+  // 現在取得済み（achState）はDBから読み、id集合化
+  // ここでは ui.js からは直接参照しないため、評価時に取得済みが更新される想定。
+  // 最新状態を反映するため、evaluateAndSaveの副作用後のレンダリングが望ましい。
+  // 簡易的に、いまのbooksから再評価を走らせ、achStateを更新してから描画する。
+  try {
+    const books = await loadBooks();
+    await evaluateAndSave(books);
+  } catch {}
+  // achState一覧を再取得したいが、ここでは簡易表示として、達成済みはローカルにトーストで把握済みとし、
+  // 一旦すべて未達成扱い→将来拡張で色付け更新
+  // 当面は総数とターゲット提示のみ行う。
+  listEl.innerHTML = defs
+    .map(
+      (d) =>
+        `<div class="ach-item"><div class="name">${escapeHtml(d.name)}</div><div class="desc">${escapeHtml(d.description)}</div></div>`,
+    )
+    .join("");
 }

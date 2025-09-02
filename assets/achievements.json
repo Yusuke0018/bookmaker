@@ -1,0 +1,72 @@
+[
+  {
+    "id": "A001",
+    "name": "初手一冊",
+    "category": "total",
+    "description": "累計1冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 1 }
+  },
+  {
+    "id": "A002",
+    "name": "三冊の法則",
+    "category": "total",
+    "description": "累計3冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 3 }
+  },
+  {
+    "id": "A003",
+    "name": "手の平の図書館",
+    "category": "total",
+    "description": "累計5冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 5 }
+  },
+  {
+    "id": "A004",
+    "name": "十冊侍",
+    "category": "total",
+    "description": "累計10冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 10 }
+  },
+  {
+    "id": "A005",
+    "name": "二十冊走法",
+    "category": "total",
+    "description": "累計20冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 20 }
+  },
+  {
+    "id": "A006",
+    "name": "三十冊ドリブラー",
+    "category": "total",
+    "description": "累計30冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 30 }
+  },
+  {
+    "id": "A007",
+    "name": "図書筋50",
+    "category": "total",
+    "description": "累計50冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 50 }
+  },
+  {
+    "id": "A008",
+    "name": "本棚ジャンキー",
+    "category": "total",
+    "description": "累計75冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 75 }
+  },
+  {
+    "id": "A009",
+    "name": "百冊の壁ドン",
+    "category": "total",
+    "description": "累計100冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 100 }
+  },
+  {
+    "id": "A010",
+    "name": "頁の暴走族",
+    "category": "total",
+    "description": "累計150冊を達成しました。",
+    "rule": { "type": "TOTAL_READS", "gte": 150 }
+  }
+]

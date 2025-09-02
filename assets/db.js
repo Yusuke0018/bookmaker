@@ -127,3 +127,16 @@ export async function getBook(id) {
   const r = tx(db, STORES.books).get(id);
   return await reqToPromise(r);
 }
+
+// Achievements state APIs
+export async function getAllAchState() {
+  const db = await openDB();
+  const r = tx(db, STORES.achState).getAll();
+  return await reqToPromise(r);
+}
+
+export async function putAchState(entry) {
+  const db = await openDB();
+  const r = tx(db, STORES.achState, "readwrite").put(entry);
+  await reqToPromise(r);
+}

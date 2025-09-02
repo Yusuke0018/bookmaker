@@ -136,8 +136,18 @@
         aria-labelledby="tab-achievements"
       >
         <div class="card">
-          <h2 class="h2">実績（準備中）</h2>
-          <p class="muted">称号100・トースト表示は次段で実装します。</p>
+          <div
+            class="row gap"
+            style="
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <h2 class="h2">実績</h2>
+            <button id="reload-ach" class="btn small">再読み込み</button>
+          </div>
+          <div id="ach-list" class="ach-grid"></div>
         </div>
       </section>
     </main>
@@ -145,6 +155,7 @@
     <div id="toast" role="status" class="toast" hidden></div>
 
     <script src="./assets/app.js" type="module"></script>
+    <script src="./assets/achievements.js" type="module"></script>
     <script src="./assets/ui.js" type="module"></script>
     <script>
       if ("serviceWorker" in navigator) {
