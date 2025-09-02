@@ -23,7 +23,11 @@ export const VERSION = "0.2.0";
 
 /** @returns {Promise<Book[]>} */
 export async function loadBooks() {
-  return await dbAll();
+  try {
+    const list = await dbAll();
+    if (Array.isArray(list)) return list;
+  } catch {}
+  return readLS();
 }
 
 /** @param {Partial<Book>} data */
@@ -42,28 +46,57 @@ export async function createBook(data) {
     createdAt: now,
     updatedAt: now,
   };
-  await dbAdd(book);
+  try {
+    await dbAdd(book);
+  } catch {
+    const books = readLS();
+    books.unshift(book);
+    writeLS(books);
+  }
   return book;
 }
 
 /** @param {string} id @param {Partial<Book>} patch */
 export async function updateBook(id, patch) {
   const existing = await dbGet(id);
-  if (!existing) throw new Error("Book not found");
+  if (!existing) {
+    const ls = readLS();
+    const idx = ls.findIndex((b) => b.id === id);
+    if (idx < 0) throw new Error("Book not found");
+    const now = new Date().toISOString();
+    const updated = { ...ls[idx], ...patch, updatedAt: now };
+    ls[idx] = updated;
+    writeLS(ls);
+    return updated;
+  }
   const now = new Date().toISOString();
   const updated = { ...existing, ...patch, updatedAt: now };
-  await dbUpdate(updated);
+  try {
+    await dbUpdate(updated);
+  } catch {
+    const ls = readLS();
+    const idx = ls.findIndex((b) => b.id === id);
+    if (idx >= 0) {
+      ls[idx] = updated;
+      writeLS(ls);
+    }
+  }
   return updated;
 }
 
 /** @param {string} id */
 export async function deleteBook(id) {
-  await dbDel(id);
+  try {
+    await dbDel(id);
+  } catch {
+    const ls = readLS().filter((b) => b.id !== id);
+    writeLS(ls);
+  }
 }
 
 /** @param {string} q */
 export async function searchBooks(q) {
-  const books = await dbAll();
+  const books = await loadBooks();
   const needle = q.trim().toLowerCase();
   if (!needle) return books;
   return books.filter((b) =>
@@ -94,4 +127,20 @@ function randomUUID() {
   );
   s[8] = s[13] = s[18] = s[23] = "-";
   return s.join("");
+}
+
+// LocalStorage fallback helpers
+const LS_KEY = "bookmaker.books.v1";
+function readLS() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function writeLS(books) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(books));
+  } catch {}
 }
