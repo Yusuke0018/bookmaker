@@ -284,6 +284,24 @@ async function renderCalendar() {
 
   // 合計ラベル
   const totalMonth = [...counts.values()].reduce((a, b) => a + b, 0);
+  const now = new Date();
+  const weekInfo = weekRange(now);
+  const year = now.getFullYear();
+  const totalWeek = books.filter((b) => b.finishedAt && inRange(new Date(b.finishedAt), weekInfo.start, weekInfo.end)).length;
+  const totalYear = books.filter((b) => b.finishedAt && new Date(b.finishedAt).getFullYear() === year).length;
   const summary = document.getElementById("cal-summary");
-  if (summary) summary.textContent = `今月 ${totalMonth} 冊`;
+  if (summary) summary.textContent = `今週 ${totalWeek} / 今月 ${totalMonth} / 今年 ${totalYear}`;
+}
+
+function inRange(d, start, end) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return x >= start && x <= end;
+}
+
+function weekRange(ref) {
+  // 月曜は0オフセット、日曜=6として週開始を算出
+  const dow = (ref.getDay() + 6) % 7; // Mon=0..Sun=6
+  const start = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - dow);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+  return { start, end };
 }
