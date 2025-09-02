@@ -17,6 +17,7 @@ const views = {
   calendar: document.getElementById("view-calendar"),
   add: document.getElementById("view-add"),
   achievements: document.getElementById("view-achievements"),
+  settings: document.getElementById("view-settings"),
 };
 
 const tabs = {
