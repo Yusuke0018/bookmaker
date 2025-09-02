@@ -89,6 +89,7 @@ window.addEventListener("load", () => {
     await saveSettings(s);
     applyTheme(s.theme);
     const stats = await getStats();
+    stats.actions = { ...(stats.actions || {}) };
     stats.actions.settingsSaved = (stats.actions.settingsSaved || 0) + 1;
     await putStats(stats);
     await evaluateAfterEvent("settings");
@@ -253,6 +254,8 @@ function initForm() {
       await updateBook(form.dataset.id, payload);
       showToast("更新しました。紙背が整いました。");
       const stats = await getStats();
+      stats.actions = { ...(stats.actions || {}) };
+      stats.actions.editCounts = stats.actions.editCounts || {};
       stats.actions.editCounts[form.dataset.id] =
         (stats.actions.editCounts[form.dataset.id] || 0) + 1;
       if (typeof payload.rating === "number")
@@ -262,6 +265,7 @@ function initForm() {
       await createBook(payload);
       showToast("綴じました。次のページへ。");
       const stats = await getStats();
+      stats.actions = { ...(stats.actions || {}) };
       if ((payload.startedAt || "") === todayISO())
         stats.actions.fastCreateCount =
           (stats.actions.fastCreateCount || 0) + 1;
