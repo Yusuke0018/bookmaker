@@ -151,8 +151,13 @@ async function renderHome() {
         new Date().getDate()) %
       books.length;
     const b = books[idx];
-    document.getElementById("reunion").innerHTML =
-      `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`;
+    const r = document.getElementById("reunion");
+    r.innerHTML = `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`;
+    r.dataset.id = b.id;
+    r.style.cursor = "pointer";
+    r.onclick = () => {
+      location.hash = `#book:${encodeURIComponent(b.id)}`;
+    };
     reunionWrap.hidden = false;
   } else {
     reunionWrap.hidden = true;
@@ -550,11 +555,18 @@ async function renderMonthInner() {
       ul.innerHTML = items
         .map(
           (b) =>
-            `<li><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</li>`,
+            `<li data-id="${b.id}"><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</li>`,
         )
         .join("");
     });
   });
+  // 選択日のリストから詳細へ
+  ul.onclick = (e) => {
+    const li = e.target.closest("li[data-id]");
+    if (!li) return;
+    const id = li.getAttribute("data-id");
+    location.hash = `#book:${encodeURIComponent(id)}`;
+  };
 
   // 合計ラベルを更新
   const totalMonth = [...counts.values()].reduce((a, b) => a + b, 0);
@@ -601,12 +613,19 @@ async function renderWeekInner() {
       const li = items
         .map(
           (b) =>
-            `<div><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`,
+            `<div data-id="${b.id}"><strong>${escapeHtml(b.title)}</strong> — ${escapeHtml(b.author)}</div>`,
         )
         .join("");
       return `<li><span class="badge">${lab}</span> (${items.length})<br>${li}</li>`;
     })
     .join("");
+  // 週一覧から詳細へ
+  ul.onclick = (e) => {
+    const el = e.target.closest("[data-id]");
+    if (!el) return;
+    const id = el.getAttribute("data-id");
+    location.hash = `#book:${encodeURIComponent(id)}`;
+  };
   updateCalSummary(books, arr.length);
 }
 
