@@ -10,8 +10,13 @@
       content="最小入力で学びを蓄積し、楽しく振り返る読書ログ"
     />
     <link rel="manifest" href="./manifest.json" />
-    <link rel="icon" href="./icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="icon" href="./icons/icon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="./icons/icon-512.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <link rel="stylesheet" href="./assets/style.css" />
   </head>
   <body>
@@ -271,16 +276,18 @@
     <script src="./assets/achievements.js" type="module"></script>
     <script src="./assets/ui.js" type="module"></script>
     <script>
-      // 毎回キャッシュを強制クリアし、Service Workerも解除します
+      // 可能なら軽量SWを登録（キャッシュはしない）
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
+      // Cache APIは毎回クリア（HTTPキャッシュの制御はブラウザ任せ）
       window.addEventListener("load", async () => {
         try {
           if (window.caches) {
             const keys = await caches.keys();
             await Promise.all(keys.map((k) => caches.delete(k)));
-          }
-          if (navigator.serviceWorker?.getRegistrations) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map((r) => r.unregister()));
           }
         } catch (e) {}
       });
