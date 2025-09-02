@@ -397,12 +397,12 @@ function setupModal() {
   });
 
   function open(book) {
-    editingId = book?.id || null;
+    editingId = (book && book.id) || null;
     openedAt = Date.now();
     form.reset();
     const todayIso = new Date().toISOString();
-    startedInput.value = DateUtil.toInputDate(book?.startedAt || todayIso);
-    if (book?.finishedAt) {
+    startedInput.value = DateUtil.toInputDate((book && book.startedAt) || todayIso);
+    if (book && book.finishedAt) {
       finishedToggle.checked = true;
       finishedAt.disabled = false;
       finishedAt.value = DateUtil.toInputDate(book.finishedAt);
@@ -411,11 +411,11 @@ function setupModal() {
       finishedAt.disabled = true;
       finishedAt.value = '';
     }
-    form.elements.namedItem('title').value = book?.title || '';
-    form.elements.namedItem('author').value = book?.author || '';
-    form.elements.namedItem('rating').value = book?.rating || '';
-    form.elements.namedItem('oneLiner').value = book?.oneLiner || '';
-    form.elements.namedItem('reviewText').value = book?.reviewText || '';
+    form.elements.namedItem('title').value = (book && book.title) || '';
+    form.elements.namedItem('author').value = (book && book.author) || '';
+    form.elements.namedItem('rating').value = (book && book.rating) || '';
+    form.elements.namedItem('oneLiner').value = (book && book.oneLiner) || '';
+    form.elements.namedItem('reviewText').value = (book && book.reviewText) || '';
     if (typeof modal.showModal === 'function') {
       modal.showModal();
     } else {
@@ -504,14 +504,17 @@ if (document.readyState === 'loading') {
 // 予期しないエラーをトーストで可視化
 window.addEventListener('error', (e) => {
   try {
-    Toast.show('エラー: ' + (e?.error?.message || e?.message || 'unknown'));
+    var msg = (e && e.error && e.error.message) || (e && e.message) || 'unknown';
+    Toast.show('エラー: ' + msg);
   } catch {
     /* ignore */
   }
 });
 window.addEventListener('unhandledrejection', (e) => {
   try {
-    Toast.show('エラー: ' + (e?.reason?.message || String(e?.reason) || 'unknown'));
+    var r = e && e.reason;
+    var msg = (r && r.message) || String(r) || 'unknown';
+    Toast.show('エラー: ' + msg);
   } catch {
     /* ignore */
   }

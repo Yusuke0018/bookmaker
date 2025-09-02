@@ -7,6 +7,11 @@
     <link rel="manifest" href="./manifest.json" />
     <link rel="icon" href="./icons/icon-192.png" />
     <meta name="theme-color" content="#0F172A" />
+    <script
+      async
+      src="https://cdn.jsdelivr.net/npm/es-module-shims@1.9.0/dist/es-module-shims.min.js"
+      crossorigin="anonymous"
+    ></script>
     <link rel="stylesheet" href="./assets/style.css?v=2" />
   </head>
   <body>
@@ -76,7 +81,7 @@
       </form>
     </dialog>
 
-    <script type="module" src="./assets/app.js?v=2"></script>
-    <script type="module" src="./assets/ui.js?v=2"></script>
+    <script type="module-shim" src="./assets/app.js?v=2"></script>
+    <script type="module-shim" src="./assets/ui.js?v=2"></script>
   </body>
 </html>
