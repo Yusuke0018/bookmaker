@@ -8,6 +8,10 @@
   --accent: #06b6d4;
   --gold: #eab308;
 }
+/* Ensure hidden attribute always hides */
+[hidden] {
+  display: none !important;
+}
 * {
   box-sizing: border-box;
 }
