@@ -17,7 +17,8 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <link rel="stylesheet" href="./assets/style.css" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <link rel="stylesheet" href="./assets/style.css?v=20250902-04" />
   </head>
   <body>
     <header class="app-header">
@@ -272,14 +273,19 @@
 
     <div id="toast" role="status" class="toast" hidden></div>
 
-    <script src="./assets/app.js" type="module"></script>
-    <script src="./assets/achievements.js" type="module"></script>
-    <script src="./assets/ui.js" type="module"></script>
+    <script src="./assets/app.js?v=20250902-04" type="module"></script>
+    <script src="./assets/achievements.js?v=20250902-04" type="module"></script>
+    <script src="./assets/ui.js?v=20250902-04" type="module"></script>
     <script>
       // 可能なら軽量SWを登録（キャッシュはしない）
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js").catch(() => {});
+          navigator.serviceWorker
+            .register("./sw.js?v=20250902-04", { updateViaCache: "none" })
+            .then((reg) => {
+              try { reg.update(); } catch {}
+            })
+            .catch(() => {});
         });
         navigator.serviceWorker.addEventListener("message", (e) => {
           const d = e.data || {};
